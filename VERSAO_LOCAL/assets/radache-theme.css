@@ -1,0 +1,123 @@
+/* Identidade compartilhada; referência: painel-demo. */
+:root {
+  color-scheme: light;
+  --radache-blue: #051d53;
+  --radache-blue-light: #0a2d7c;
+  --radache-yellow: #f2b719;
+  --radache-yellow-alpha: rgba(242, 183, 25, 0.10);
+  --radache-bg: #f8fafc;
+  --color-primary: var(--radache-blue);
+  --color-primary-light: var(--radache-blue-light);
+  --color-primary-dark: #031438;
+  --color-bg: var(--radache-bg);
+  --color-surface: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-soft: #f1f5f9;
+  --color-border-focus: var(--radache-blue);
+  --color-risk-stable: #15803d;
+  --color-risk-stable-bg: #f0fdf4;
+  --color-risk-stable-border: #bbf7d0;
+  --color-risk-moderate: #d97706;
+  --color-risk-moderate-bg: #fffbeb;
+  --color-risk-moderate-border: #fde68a;
+  --color-risk-critical: #e11d48;
+  --color-risk-critical-bg: #fff1f2;
+  --color-risk-critical-border: #fecdd3;
+  --color-text-main: #1e293b;
+  --color-text-heading: #0f172a;
+  --color-text-muted: #64748b;
+  --color-text-light: #94a3b8;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 25px 50px -12px rgba(5, 29, 83, 0.35);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --page-gutter: 1rem;
+  --transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+
+  /* Extensões de composição: usam a paleta e os estados semânticos acima. */
+  --color-transparent: transparent;
+  --color-overlay: rgba(5, 29, 83, 0.42);
+  --color-primary-soft: #eef2ff;
+  --color-on-primary-muted: #cbd5e1;
+  --color-on-primary-line: rgba(255, 255, 255, 0.15);
+  --color-on-primary-soft: rgba(255, 255, 255, 0.06);
+  --color-open: var(--color-primary);
+  --color-open-bg: var(--color-border-soft);
+  --color-open-border: var(--color-border);
+  --color-progress: var(--color-primary-light);
+  --color-progress-bg: var(--color-primary-soft);
+  --color-progress-border: var(--color-border);
+  --color-waiting: var(--color-risk-moderate);
+  --color-waiting-bg: var(--color-risk-moderate-bg);
+  --color-waiting-border: var(--color-risk-moderate-border);
+  --color-resolved: var(--color-risk-stable);
+  --color-resolved-bg: var(--color-risk-stable-bg);
+  --color-resolved-border: var(--color-risk-stable-border);
+  --font-xs: .6875rem;
+  --font-sm: .75rem;
+  --font-base: .875rem;
+  --font-md: .9375rem;
+  --font-lg: 1rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.5rem;
+  --font-3xl: 2.25rem;
+  --font-hero: 2.75rem;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height: 1.6;
+  --line-heading: 1.2;
+  --tracking-tight: -.025em;
+  --tracking-wide: .1em;
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --border-width: 1px;
+  --accent-width: 3px;
+  --focus-width: 3px;
+  --focus-offset: 3px;
+  --header-height: 4rem;
+  --sidebar-width: 15rem;
+  --content-width: 80rem;
+  --login-width: 70rem;
+  --login-height: 40rem;
+  --login-form-width: 25rem;
+  --dialog-width: 36rem;
+  --dialog-wide: 50rem;
+  --drawer-width: 52rem;
+  --field-height: 2.75rem;
+  --icon-size: 1.25rem;
+  --icon-sm: 1rem;
+  --brand-size: 2.75rem;
+  --avatar-size: 2.5rem;
+  --column-width: 15.5rem;
+  --empty-height: 13rem;
+  --textarea-height: 7rem;
+  --table-width: 42rem;
+  --status-pill-radius: 100px;
+  --opacity-disabled: .5;
+  --motion-fast: .15s;
+  --motion-loop: 1s;
+  --stroke-width: 1.7;
+}
+@media (min-width: 640px) { :root { --page-gutter: 1.5rem; } }
+@media (min-width: 1024px) { :root { --page-gutter: 2rem; } }
+
+:root { --page-width: 80rem; --page-title-size: 1.5rem; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--radache-yellow); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

@@ -1,0 +1,35 @@
+@import url("../assets/radache-theme.css");
+.skip-link { position: fixed; top: .5rem; left: .5rem; z-index: 10; padding: .75rem 1rem; background: var(--radache-blue); color: white; border-radius: var(--radius-md); transform: translateY(-200%); }
+.skip-link:focus { transform: translateY(0); }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; color: var(--color-text-main); background: var(--color-bg); font: .875rem/1.6 var(--font-family); }
+a { color: inherit; }
+header { min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem max(var(--page-gutter), calc((100% - var(--page-width)) / 2 + var(--page-gutter))); background: white; border-bottom: 1px solid var(--color-border); }
+.brand { display: inline-flex; align-items: center; gap: .75rem; text-decoration: none; }
+.brand-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 8px; background: var(--radache-blue); color: var(--radache-yellow); }
+.brand-mark > .fa-satellite-dish { font-size: 1.25rem; }
+.brand-mark svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.brand strong { font-size: 1.125rem; letter-spacing: -.025em; color: var(--color-text-heading); }
+.badge { font-size: .6875rem; color: var(--color-text-muted); background: var(--color-bg); padding: .25rem .5rem; border: 1px solid var(--color-border); border-radius: 6px; }
+main { width: 100%; max-width: var(--page-width); margin: 0 auto; padding: 2rem var(--page-gutter); }
+.intro { margin-bottom: 2rem; }
+.eyebrow, .number { color: var(--color-text-muted); font-size: .6875rem; font-weight: 600; letter-spacing: .05em; }
+h1 { margin: .5rem 0 .25rem; font-size: var(--page-title-size); line-height: 2rem; letter-spacing: -.025em; font-weight: 700; color: var(--radache-blue); }
+.intro p { margin: 0; color: var(--color-text-muted); }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+.card { display: flex; flex-direction: column; padding: 1.5rem; background: white; border: 1px solid var(--color-border); border-left: 4px solid var(--radache-blue); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); text-decoration: none; transition: transform .2s, border-color .2s, box-shadow .2s; }
+.card:hover { transform: translateY(-4px); border-left-color: var(--radache-yellow); box-shadow: var(--shadow-md); }
+.card h2 { display: flex; justify-content: space-between; gap: .5rem; margin: 1rem 0 .5rem; font-size: 1.125rem; line-height: 1.5; font-weight: 700; color: var(--color-text-heading); }
+.card h2 span { color: var(--color-text-light); }
+.card p { font-size: .8125rem; color: var(--color-text-muted); margin: 0 0 1.5rem; }
+.action { margin-top: auto; font-size: .75rem; font-weight: 600; color: var(--radache-blue); }
+.access { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; padding: 1.5rem; background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.access h2 { font-size: 1.125rem; color: var(--color-text-heading); margin: .5rem 0; }
+.access p { font-size: .8125rem; color: var(--color-text-muted); }
+.credentials { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+.credentials strong { color: var(--color-text-heading); }
+code { background: var(--color-bg); color: var(--radache-blue); border: 1px solid var(--color-border); border-radius: 6px; padding: .125rem .375rem; overflow-wrap: anywhere; }
+small { font-size: .75rem; }
+footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; padding: 1rem max(var(--page-gutter), calc((100% - var(--page-width)) / 2 + var(--page-gutter))); border-top: 1px solid var(--color-border); background: white; color: var(--color-text-muted); font-size: .75rem; }
+@media (max-width: 950px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .access { grid-template-columns: 1fr; gap: 1rem; } }
+@media (max-width: 600px) { .cards, .credentials { grid-template-columns: 1fr; } .cards { gap: 1rem; } .card { padding: 1.25rem; } }

@@ -1,0 +1,67 @@
+/* Visualizações do quadro e risco acadêmico, na identidade compartilhada do RADACHE. */
+.ticket-views { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin:16px 0 24px; }
+.ticket-views button { display:flex; align-items:center; gap:9px; min-height:64px; padding:13px; background:var(--color-surface); border:1px solid var(--color-border); border-radius:12px; color:var(--color-text-muted); font:inherit; font-size:12px; font-weight:600; text-align:left; transition:var(--transition); }
+.ticket-views button:hover { border-color:var(--color-primary); background:#f4f7fc; }
+.ticket-views button[aria-pressed=true] { background:var(--color-primary); border-color:var(--color-primary); color:white; box-shadow:0 4px 12px #051d5314; }
+.ticket-views strong { display:grid; place-items:center; margin-left:auto; min-width:28px; min-height:28px; padding:3px 6px; background:#edf1f7; border-radius:8px; color:var(--color-text-heading); font-size:14px; }
+.ticket-views [aria-pressed=true] strong { color:white; background:#ffffff24; }
+.view-symbol { font-size:22px; line-height:1; }
+.view-dot { width:8px; height:8px; flex-shrink:0; border-radius:50%; background:var(--status-color); }
+.board-context { display:flex; align-items:center; justify-content:space-between; gap:18px; margin-bottom:18px; }
+.board-context h3 { margin:0 0 5px; font-size:17px; color:var(--color-text-heading); }
+.board-context p { font-size:12px; color:var(--color-text-muted); margin:0; line-height:1.7; }
+.risk-key { display:flex; gap:12px; flex-wrap:wrap; flex-shrink:0; font-size:11px; color:var(--color-text-muted); }
+.risk-key span { display:flex; align-items:center; gap:5px; }
+.risk-key span::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--risk-color); }
+.risk-alto { --risk-color:#b4233d; --risk-bg:var(--color-risk-critical-bg); --risk-border:var(--color-risk-critical-border); }
+.risk-medio { --risk-color:#a25c06; --risk-bg:var(--color-risk-moderate-bg); --risk-border:var(--color-risk-moderate-border); }
+.risk-baixo { --risk-color:var(--color-risk-stable); --risk-bg:var(--color-risk-stable-bg); --risk-border:var(--color-risk-stable-border); }
+.risk-sem_avaliacao { --risk-color:#475569; --risk-bg:#f1f5f9; --risk-border:#dce3eb; }
+.ticket-board .ticket-column[hidden] { display:none!important; }
+.ticket-board[data-view=geral] .ticket-column { display:block; }
+.ticket-board[data-view=geral] { grid-template-columns:repeat(3,minmax(240px,1fr)); }
+#attendance-metrics { grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); }
+#attendance-team { padding:20px; margin-bottom:24px; }
+#attendance-team p { margin:10px 0; }
+#attendance-table { margin:24px 0; }
+.staff-panel { padding:20px; margin-bottom:24px; }
+.staff-panel .filters { margin:16px 0; }
+.staff-panel p { margin:12px 0; }
+#staff-results button { margin-left:8px; }
+#staff-search,#staff-campus { min-height:40px; padding:8px; border:1px solid var(--color-border); border-radius:8px; }
+#user-redistribution { margin:16px 0; }
+#ticket-search { min-width:220px; }
+.attendance-personal [data-attendance-metric="totalAtendentesAtivos"],
+.attendance-personal [data-attendance-metric="semResponsavel"],
+.attendance-personal label:has(#ticket-unassigned),
+.attendance-personal label:has(#responsible-filter) { display:none; }
+.status-reaberto { --status-color:#a25c06; }
+.status-encerrado { --status-color:#475569; }
+.ticket-board.is-focused { display:grid; grid-template-columns:minmax(0,1fr); overflow:visible; }
+.ticket-board.is-focused .ticket-column { display:block; padding:18px; }
+.ticket-board.is-focused .ticket-list { grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; }
+.ticket-board.is-focused .empty-state { grid-column:1/-1; }
+.ticket-board.is-focused .column-more { display:block; width:auto; min-width:220px; margin:18px auto 0; }
+.ticket-card { border-top-width:3px; overflow-wrap:anywhere; }
+.ticket-card.card-risk-alto { border-top-color:var(--color-risk-critical); }
+.ticket-card.card-risk-medio { border-top-color:var(--color-risk-moderate); }
+.ticket-card.card-risk-baixo { border-top-color:var(--color-risk-stable); }
+.ticket-card.card-risk-sem_avaliacao { border-top-color:#c5cfdd; }
+.ticket-card.card-stalled { border-left:1px solid var(--color-border); }
+.academic-risk { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:7px; padding:9px; margin-bottom:14px; background:var(--risk-bg); border:1px solid var(--risk-border); color:var(--risk-color); border-radius:7px; font-size:11px; line-height:1.5; }
+.risk-label { display:flex; align-items:center; gap:6px; }
+.risk-label .icon { width:14px; height:14px; }
+.risk-value { font-weight:500; font-size:10px; }
+.card-student { display:block; font-weight:600; margin-top:12px; font-size:13px; color:var(--color-text-heading); }
+.risk-detail { padding:15px; margin:16px 0; font-size:14px; }
+.risk-detail .risk-value { font-size:13px; font-weight:600; }
+.risk-detail small { flex-basis:100%; font-size:11px; color:var(--color-text-muted); }
+#detail-risk { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:14px; margin:16px 0; }
+#detail-risk .risk-detail { margin:0; }
+.whatsapp-contact { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px; padding:12px 16px; border:1px solid #15803d; border-radius:8px; color:white; background:#15803d; font-size:12px; text-decoration:none; white-space:nowrap; }
+.whatsapp-contact:hover { background:#166534; border-color:#166534; color:white; }
+.whatsapp-contact .fa-whatsapp { font-size:20px; }
+.whatsapp-contact[aria-disabled=true] { background:#eef2f6; border-color:#dce3eb; color:#64748b; cursor:default; }
+@media(max-width:640px) { #detail-risk { grid-template-columns:minmax(0,1fr); gap:10px; } .whatsapp-contact { width:100%; white-space:normal; } }
+@media(max-width:1200px) { .ticket-views { gap:7px; } .ticket-views button { flex-wrap:wrap; font-size:11px; padding:11px; } .board-context { align-items:flex-start; flex-direction:column; gap:12px; } .ticket-board.is-focused .ticket-list { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:640px) { .ticket-views { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:20px; } .ticket-views button { min-height:54px; flex-wrap:nowrap; font-size:11px; } .ticket-views button:first-child { grid-column:1/-1; } .ticket-board[data-view=geral] { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; } .ticket-board.is-focused .ticket-list { grid-template-columns:minmax(0,1fr); } .ticket-board.is-focused .ticket-column { padding:12px; } .ticket-views strong { min-width:25px; min-height:25px; font-size:12px; } .risk-key { gap:11px; } .board-context h3 { font-size:16px; } }

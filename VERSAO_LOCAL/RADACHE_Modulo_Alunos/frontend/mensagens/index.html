@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#051d53">
+  <meta name="description" content="Simulação do WhatsApp RADACHE: responda como aluno ao convite, perguntas de check-in, lembretes e comandos de consentimento.">
+  <title>Simulação WhatsApp · RADACHE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23051d53'/%3E%3Cpath d='M10 11h20v15H17l-7 5z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../../../assets/fonts/inter.css">
+  <link rel="stylesheet" href="../../../assets/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <svg class="svg-definitions" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l-3 2V11.5a10 10 0 0 1 20 0Z"/><path d="M7 10h9M7 14h6"/></symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="icon-code" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18"/></symbol>
+    <symbol id="icon-back" viewBox="0 0 24 24"><path d="m14 5-7 7 7 7M7 12h14"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="icon-send" viewBox="0 0 24 24"><path d="m21 3-7 18-4-7-7-4 18-7ZM10 14 21 3"/></symbol>
+    <symbol id="icon-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14a4.5 4.5 0 0 0 8 0M8 9h.01M16 9h.01"/></symbol>
+    <symbol id="icon-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11h-6v-7H9v7H3Z"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></symbol>
+  </svg>
+
+  <div class="workspace" id="workspace">
+    <nav class="rail" aria-label="Navegação RADACHE">
+      <a href="/" class="brand-mark" title="Voltar ao RADACHE" aria-label="Voltar ao RADACHE"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i></a>
+      <button type="button" class="rail-button selected" id="show-conversations" aria-label="Mostrar conversas" title="Conversas"><svg class="icon"><use href="#icon-chat"/></svg></button>
+      <a class="rail-button" href="/" title="Todas as páginas" aria-label="Todas as páginas"><svg class="icon"><use href="#icon-home"/></svg></a>
+      <div class="rail-bottom">
+        <button type="button" class="rail-button" data-open-inspector aria-label="Inspecionar último envio" title="Inspecionar envio"><svg class="icon"><use href="#icon-code"/></svg></button>
+        <button type="button" class="rail-button" id="about-button" aria-label="Sobre o protótipo" title="Sobre o protótipo"><svg class="icon"><use href="#icon-info"/></svg></button>
+        <span class="self-avatar" title="Coordenação · perfil demonstrativo">CO</span>
+      </div>
+    </nav>
+
+    <aside class="sidebar" aria-label="Conversas">
+      <header class="sidebar-header">
+        <div class="eyebrow">RADACHE <span>/</span> MENSAGENS</div>
+        <div class="title-row"><h1>Conversas<span class="heading-dot">.</span></h1><span class="demo-badge">PROTÓTIPO</span></div>
+        <p>Uma conversa pode fazer a diferença.</p>
+        <a id="experience-link" class="experience-link" href="?modo=api">Abrir teste manual da API ↗</a>
+      </header>
+      <div class="sidebar-tools">
+        <label class="search-field"><svg class="icon"><use href="#icon-search"/></svg><input id="contact-search" type="search" placeholder="Buscar uma conversa" autocomplete="off" aria-label="Buscar contato ou curso"></label>
+        <div class="filters" role="group" aria-label="Filtrar conversas">
+          <button type="button" class="filter active" data-filter="all" aria-pressed="true">Todas <span id="all-count">0</span></button>
+          <button type="button" class="filter" data-filter="unread" aria-pressed="false">Não lidas <span id="unread-count">0</span></button>
+        </div>
+      </div>
+      <div id="contact-list" class="contact-list" aria-label="Lista de contatos"></div>
+      <footer class="sidebar-footer"><span class="connection-dot"></span><div><strong>Ambiente de demonstração</strong><span>Contatos e conversas fictícios</span></div><svg class="icon"><use href="#icon-shield"/></svg></footer>
+    </aside>
+
+    <main class="chat" aria-label="Conversa selecionada">
+      <header class="chat-header">
+        <button type="button" id="back-button" class="icon-button mobile-back" aria-label="Voltar às conversas"><svg class="icon"><use href="#icon-back"/></svg></button>
+        <span id="chat-avatar" class="avatar tone-sage" aria-hidden="true">AM</span>
+        <div class="chat-identity"><h2 id="chat-name">Ana Martins</h2><p id="chat-course">Ciência da Computação · 4º semestre</p></div>
+        <span class="mode-badge" id="mode-badge"><span class="connection-dot"></span>API mock local</span>
+        <button type="button" class="icon-button" id="chat-search-toggle" aria-label="Buscar nesta conversa" title="Buscar nesta conversa" aria-expanded="false"><svg class="icon"><use href="#icon-search"/></svg></button>
+        <button type="button" class="icon-button" data-open-inspector aria-label="Inspecionar último envio" title="Inspecionar envio"><svg class="icon"><use href="#icon-code"/></svg></button>
+      </header>
+      <div class="conversation-search" id="conversation-search" hidden>
+        <label class="search-field"><svg class="icon"><use href="#icon-search"/></svg><input type="search" id="message-search" placeholder="Buscar mensagem nesta conversa" aria-label="Buscar mensagem nesta conversa"></label>
+        <span id="search-results" role="status"></span>
+        <button type="button" class="icon-button" id="close-chat-search" aria-label="Fechar busca"><svg class="icon"><use href="#icon-close"/></svg></button>
+      </div>
+      <div class="demo-notice"><svg class="icon"><use href="#icon-shield"/></svg><span>Espaço de teste RADACHE. Os envios são simulados e não chegam ao WhatsApp.</span></div>
+      <section id="simulation-controls" class="simulation-controls" aria-label="Controles da simulação" hidden>
+        <div class="simulation-heading"><div><span class="simulation-kicker">VOCÊ ESTÁ NO PAPEL DO ALUNO</span><p id="simulation-student"></p></div><span id="simulation-stage" class="simulation-stage" role="status"></span></div>
+        <div class="simulation-progress" aria-label="Progresso do check-in"><span id="simulation-progress-fill"></span></div>
+        <div class="simulation-actions">
+          <button type="button" data-simulation-action="dias" title="Avançar 72 horas sem resposta">+ 3 dias</button>
+          <button type="button" data-simulation-action="mes">Próximo mês</button>
+          <button type="button" data-simulation-action="ano" title="Avançar 12 meses para testar a renovação do consentimento">+12 meses</button>
+          <button type="button" data-simulation-action="reiniciar">Reiniciar</button>
+          <span id="simulation-date"></span>
+        </div>
+        <details class="simulation-details"><summary>Dados do check-in simulado</summary><p id="simulation-data"></p><p id="simulation-consent"></p><p>F e P são os componentes financeiro e emocional. O RE total depende dos demais dados do aluno.</p></details>
+      </section>
+      <section class="message-area" id="message-area" aria-label="Histórico da conversa" tabindex="0">
+        <div class="message-column" id="message-list"></div>
+      </section>
+      <div class="composer-area">
+        <div id="simulation-replies" class="simulation-replies" role="group" aria-label="Respostas rápidas do aluno" hidden></div>
+        <div id="simulation-typing" class="simulation-typing" role="status" hidden>RADACHE está respondendo<span>...</span></div>
+        <div id="emoji-picker" class="emoji-picker" role="group" aria-label="Inserir emoji" hidden>
+          <button type="button" data-emoji="😊" aria-label="Sorriso">😊</button><button type="button" data-emoji="👋" aria-label="Olá">👋</button><button type="button" data-emoji="💚" aria-label="Coração verde">💚</button><button type="button" data-emoji="👍" aria-label="Positivo">👍</button><button type="button" data-emoji="🎓" aria-label="Formatura">🎓</button><button type="button" data-emoji="✨" aria-label="Brilho">✨</button>
+        </div>
+        <form id="message-form" class="composer">
+          <button type="button" id="emoji-toggle" class="icon-button" aria-label="Escolher emoji" aria-expanded="false" aria-controls="emoji-picker"><svg class="icon"><use href="#icon-smile"/></svg></button>
+          <button type="button" id="simulate-audio" class="icon-button simulate-audio" aria-label="Simular envio de áudio" title="Simular áudio (não utiliza o microfone)" hidden>♪</button>
+          <label for="message-input" class="visually-hidden">Escrever mensagem</label>
+          <textarea id="message-input" rows="1" maxlength="4000" placeholder="Escreva uma mensagem..." aria-describedby="composer-help"></textarea>
+          <button type="submit" id="send-button" class="send-button" aria-label="Enviar mensagem" title="Enviar mensagem" disabled><svg class="icon"><use href="#icon-send"/></svg></button>
+        </form>
+        <div class="composer-caption"><span id="composer-help"><kbd>Enter</kbd> para enviar <span>·</span> <kbd>Shift + Enter</kbd> para nova linha</span><span id="character-count">0 / 4.000</span></div>
+      </div>
+      <footer class="chat-footer"><span>RADACHE</span> Tecnologia que aproxima. Cuidado que permanece.<span class="footer-version">ENGENHARIA DE SOFTWARE · v1.0</span></footer>
+    </main>
+  </div>
+
+  <dialog id="api-dialog" class="api-dialog" aria-labelledby="api-title">
+    <div class="dialog-heading"><div><div class="eyebrow">FERRAMENTA DE VALIDAÇÃO</div><h2 id="api-title">Inspecionar envio</h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Fechar inspeção"><svg class="icon"><use href="#icon-close"/></svg></button></div>
+    <p class="dialog-description">Confira o contrato enviado ao back-end. O mock valida a requisição, sem gravar no banco.</p>
+    <div class="endpoint"><span>POST</span><code id="api-endpoint"></code></div>
+    <div class="code-heading"><h3>Corpo da requisição</h3><button type="button" id="copy-payload" class="text-button" disabled><svg class="icon"><use href="#icon-copy"/></svg>Copiar JSON</button></div>
+    <pre id="payload-preview">Envie uma mensagem para visualizar o JSON.</pre>
+    <div class="code-heading"><h3>Resposta do servidor</h3><span id="api-status" class="api-status">Aguardando envio</span></div>
+    <pre id="response-preview">Nenhuma requisição realizada nesta sessão.</pre>
+    <p class="integration-hint">Integração: configure <code>API_CONFIG.endpoint</code> em <code>js/config.js</code>. Consulte o README para o contrato completo.</p>
+  </dialog>
+
+  <dialog id="about-dialog" class="about-dialog" aria-labelledby="about-title">
+    <div class="dialog-heading"><div><div class="eyebrow">RADACHE · ENGENHARIA DE SOFTWARE</div><h2 id="about-title">Conversas que conectam.</h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Fechar informações"><svg class="icon"><use href="#icon-close"/></svg></button></div>
+    <p>Protótipo acadêmico inspirado no WhatsApp Web para validar a comunicação de mensagens do RADACHE.</p>
+    <p>Ao enviar, a mensagem aparece imediatamente. Um POST com JSON é disparado para a API local; a confirmação ou falha aparece na própria mensagem.</p>
+    <div class="about-note">Os dados são fictícios. O histórico enviado fica na memória desta aba e é reiniciado ao recarregar. A confirmação do mock não indica entrega ao destinatário nem persistência no banco.</div>
+    <a class="documentation-link" href="./README.md" target="_blank" rel="noopener">Abrir documentação técnica ↗</a>
+  </dialog>
+  <p id="announcer" class="visually-hidden" role="status" aria-live="polite"></p>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <noscript>Ative o JavaScript para utilizar o protótipo de mensagens do RADACHE.</noscript>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#051d53">
+  <meta name="description" content="RADACHE — gestão de equipes e acompanhamento de atendimentos por curso. UNEMAT, Câmpus de Cáceres.">
+  <title>Gestão local por curso — RADACHE | UNEMAT</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/fonts/inter.css">
+  <link rel="stylesheet" href="../assets/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/app.css">
+  <link rel="stylesheet" href="./css/navigation.css">
+  <link rel="stylesheet" href="./css/tickets.css">
+  <link rel="stylesheet" href="/assets/risk-history.css">
+  <script type="module" src="./js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Ir para o conteúdo</a>
+  <main id="login-screen" class="login-screen">
+    <div class="login-layout">
+      <section class="login-intro" aria-label="RADACHE">
+        <div class="brand brand-on-dark"><span class="brand-icon"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i></span><div><strong>RADACHE</strong><span>UNEMAT · CÂMPUS DE CÁCERES</span></div></div>
+        <div class="login-copy"><span class="eyebrow on-dark">ACOMPANHAMENTO ESTUDANTIL</span><h1>Cada trajetória<br>merece atenção<span>.</span></h1><p>Uma equipe conectada para acompanhar o estudante, do primeiro contato à resolução.</p></div>
+        <ul class="login-features"><li><svg class="icon"><use href="./assets/icons.svg#building"/></svg>Equipe organizada por curso</li><li><svg class="icon"><use href="./assets/icons.svg#comment"/></svg>Histórico completo dos atendimentos</li><li><svg class="icon"><use href="./assets/icons.svg#shield"/></svg>Acesso conforme sua responsabilidade</li></ul>
+        <p class="login-institution">Universidade do Estado de Mato Grosso<br><strong>Conhecimento que transforma. Apoio que aproxima.</strong></p>
+      </section>
+      <section class="login-panel" aria-labelledby="login-title">
+        <div class="login-form-wrap"><span id="login-environment" class="environment-badge">Acesso institucional</span><h2 id="login-title">Entre na sua conta</h2><p class="muted">Acesse os alunos e atendimentos do seu curso.</p>
+          <form id="login-form">
+            <label class="field"><span>Login</span><input type="text" name="email" id="login-email" autocomplete="username" maxlength="254" placeholder="Seu login ou e-mail de acesso" required></label>
+            <label class="field"><span>Senha</span><span class="password-field"><input type="password" name="senha" id="login-password" autocomplete="current-password" placeholder="Sua senha" required><button type="button" id="toggle-password" class="icon-button" aria-label="Mostrar senha" aria-pressed="false"><svg class="icon"><use href="./assets/icons.svg#eye"/></svg></button></span></label>
+            <div class="login-links"><span>Sua conta é individual.</span><button type="button" id="reset-password" class="text-button" disabled>Esqueci minha senha</button></div>
+            <p id="login-message" class="form-message" role="status">Preparando acesso seguro...</p>
+            <button type="submit" id="login-submit" class="button button-primary full-width" disabled>Entrar no RADACHE <svg class="icon"><use href="./assets/icons.svg#arrow"/></svg></button>
+            <button type="button" id="retry-auth" class="button button-secondary full-width" hidden>Tentar carregar o acesso novamente</button>
+          </form>
+          <p class="login-support">Demonstração local: <strong>admin@radache.local</strong> · senha <strong>admin123</strong>. <a href="/">Todas as páginas</a>.</p>
+          <p class="session-note"><svg class="icon"><use href="./assets/icons.svg#shield"/></svg>A sessão fica somente nesta aba. Encerre o acesso ao terminar.</p>
+        </div>
+      </section>
+    </div>
+    <footer class="login-footer">RADACHE · Programa de apoio ao estudante <span>UNEMAT / CÁCERES</span></footer>
+  </main>
+
+  <div id="app-shell" class="app-shell" hidden>
+    <header class="app-header">
+      <a href="#chamados" class="brand"><span class="brand-icon"><i class="fa-solid fa-satellite-dish" aria-hidden="true"></i></span><div><strong>RADACHE <span>Gestão</span></strong><span>Câmpus de Cáceres · UNEMAT</span></div></a>
+      <div class="header-session"><span id="app-environment" class="environment-badge"></span><div class="header-person"><strong id="session-name"></strong><span id="session-profile"></span></div><span id="session-avatar" class="avatar" aria-hidden="true"></span><button type="button" id="logout-button" class="icon-button" aria-label="Sair da conta" title="Sair da conta"><svg class="icon"><use href="./assets/icons.svg#logout"/></svg></button></div>
+    </header>
+    <aside class="sidebar" aria-label="Navegação principal">
+      <div class="scope-card"><span class="scope-icon"><svg class="icon"><use href="./assets/icons.svg#building"/></svg></span><div><span class="eyebrow">SEU ESCOPO DE ACESSO</span><strong id="scope-name"></strong></div><svg class="icon small"><use href="./assets/icons.svg#shield"/></svg></div>
+      <nav aria-label="Áreas do RADACHE">
+        <div class="nav-group">
+          <p class="nav-caption">NAVEGAÇÃO</p>
+          <a href="/" class="nav-item"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Todas as páginas</span></a>
+          <a id="institutional-nav" href="/institucional/" class="nav-item" hidden><span>Observatório institucional</span></a><a href="/alunos/" class="nav-item"><i class="fa-solid fa-users" aria-hidden="true"></i><span>Gerenciamento de alunos</span></a>
+          <a href="/painel-demo/" class="nav-item"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i><span>Painel de acompanhamento</span></a>
+        </div>
+        <div class="nav-group">
+          <p class="nav-caption">ACOMPANHAMENTO</p>
+          <a href="#chamados" data-page="chamados" class="nav-item"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#tickets"/></svg><span>Chamados</span><svg class="icon nav-arrow" aria-hidden="true"><use href="./assets/icons.svg#chevron"/></svg></a>
+          <a href="#alunos" data-page="alunos" class="nav-item"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#student"/></svg><span>Alunos do curso</span><svg class="icon nav-arrow" aria-hidden="true"><use href="./assets/icons.svg#chevron"/></svg></a>
+        </div>
+        <div id="management-nav" class="nav-group" hidden>
+          <p class="nav-caption">ADMINISTRAÇÃO</p>
+          <a href="#usuarios" data-page="usuarios" class="nav-item"><svg class="icon" aria-hidden="true"><use href="./assets/icons.svg#users"/></svg><span>Equipe e acessos</span><svg class="icon nav-arrow" aria-hidden="true"><use href="./assets/icons.svg#chevron"/></svg></a>
+        </div>
+      </nav>
+      <div class="sidebar-bottom"><svg class="icon"><use href="./assets/icons.svg#shield"/></svg><p>Acesso individual.<br>Atendimento em equipe.</p><span class="muted">RADACHE · UNEMAT</span></div>
+    </aside>
+    <main id="main-content" class="main-content" tabindex="-1">
+      <div class="breadcrumb"><span>Câmpus de Cáceres</span><svg class="icon"><use href="./assets/icons.svg#chevron"/></svg><span id="page-breadcrumb">Atendimentos</span></div>
+      <div class="page-heading"><div><span id="page-eyebrow" class="eyebrow">ATENDIMENTO ESTUDANTIL</span><h1 id="page-title">Acompanhamento de chamados</h1><p id="page-description">Acompanhe os atendimentos e registre as ações da equipe.</p></div><div class="heading-actions"><button type="button" id="refresh-button" class="button button-secondary"><svg class="icon"><use href="./assets/icons.svg#refresh"/></svg>Atualizar</button><button type="button" id="create-user-button" class="button button-primary" hidden><svg class="icon"><use href="./assets/icons.svg#plus"/></svg>Novo acesso</button><button type="button" id="create-student-button" class="button button-primary" hidden><svg class="icon"><use href="./assets/icons.svg#plus"/></svg>Novo aluno</button></div></div>
+      <div id="app-alert" class="alert alert-error" role="alert" hidden><svg class="icon"><use href="./assets/icons.svg#warning"/></svg><p id="app-alert-text"></p><button type="button" id="retry-page" class="text-button">Tentar novamente</button></div>
+      <section class="global-filters" aria-label="Escopo dos dados"><label class="field inline-field" id="campus-scope-label" hidden><span>Câmpus</span><select id="campus-scope-filter"><option value="">Todos os câmpus</option><option value="caceres">Cáceres</option><option value="varzea-grande">Várzea Grande</option><option value="cuiaba">Cuiabá</option></select></label><label class="field inline-field" id="course-filter-label" hidden><span>Curso</span><select id="course-filter"><option value="">Todos os cursos</option></select></label><div class="scope-description"><svg class="icon"><use href="./assets/icons.svg#shield"/></svg><span id="scope-description"></span></div><span id="last-updated" class="last-updated" role="status"></span></section>
+
+      <section id="tickets-page" aria-label="Chamados">
+        <div id="metrics" class="metrics" hidden><article class="metric-card"><span class="metric-icon"><svg class="icon"><use href="./assets/icons.svg#clock"/></svg></span><div><p>Tempo médio de resolução</p><strong id="metric-average">—</strong><span>Entre os chamados resolvidos</span></div></article><article class="metric-card"><span class="metric-icon metric-warning"><svg class="icon"><use href="./assets/icons.svg#warning"/></svg></span><div><p>Sem atividade há mais de 48h</p><strong id="metric-stalled">—</strong><span>Chamados ainda não resolvidos</span></div></article><article class="metric-card"><span class="metric-icon metric-success"><svg class="icon"><use href="./assets/icons.svg#check"/></svg></span><div><p>Chamados resolvidos</p><strong id="metric-resolved">—</strong><span>No curso ou escopo selecionado</span></div></article></div>
+        <div class="section-toolbar"><div><h2>Quadro de atendimentos</h2><p>Riscos altos primeiro. Abra um chamado para consultar a linha do tempo.</p></div><div class="filters"><label class="field inline-field"><span class="visually-hidden">Filtrar por categoria</span><select id="category-filter"><option value="">Todas as categorias</option></select></label><label class="field inline-field"><span class="visually-hidden">Filtrar por responsável</span><select id="responsible-filter"><option value="">Todos os responsáveis</option></select></label><button type="button" id="clear-ticket-filters" class="text-button">Limpar filtros</button></div></div>
+        <div class="ticket-views" role="group" aria-label="Visualização dos atendimentos">
+          <button type="button" data-ticket-status="geral" aria-pressed="true"><span class="view-symbol" aria-hidden="true">▦</span><span>Quadro geral</span><strong data-status-count="geral">—</strong></button>
+          <button type="button" data-ticket-status="aberto" aria-pressed="false"><span class="view-dot status-aberto" aria-hidden="true"></span><span>Abertos</span><strong data-status-count="aberto">—</strong></button>
+          <button type="button" data-ticket-status="em_andamento" aria-pressed="false"><span class="view-dot status-em_andamento" aria-hidden="true"></span><span>Em andamento</span><strong data-status-count="em_andamento">—</strong></button>
+          <button type="button" data-ticket-status="aguardando_aluno" aria-pressed="false"><span class="view-dot status-aguardando_aluno" aria-hidden="true"></span><span>Aguardando aluno</span><strong data-status-count="aguardando_aluno">—</strong></button>
+          <button type="button" data-ticket-status="resolvido" aria-pressed="false"><span class="view-dot status-resolvido" aria-hidden="true"></span><span>Resolvidos</span><strong data-status-count="resolvido">—</strong></button>
+        </div>
+        <div class="board-context"><div><h3 id="board-view-title">Todos os atendimentos</h3><p id="board-view-summary" role="status" aria-live="polite">Consultando os chamados…</p></div><div class="risk-key" aria-label="Legenda de risco acadêmico"><span class="risk-alto">Alto</span><span class="risk-medio">Médio</span><span class="risk-baixo">Baixo</span><span class="risk-sem_avaliacao">Sem avaliação</span></div></div>
+        <div id="ticket-board" class="ticket-board" data-view="geral" aria-labelledby="board-view-title"></div><p class="board-caption">Curso, categoria e responsável delimitam os chamados e os contadores acima. Os indicadores de resolução consideram o curso selecionado. O risco acadêmico usa a última avaliação válida do aluno e não representa evasão confirmada. Ordem em todos os grupos: risco alto, médio, baixo e sem avaliação. Dentro do mesmo nível, os atendimentos mais recentes aparecem primeiro.</p>
+      </section>
+
+      <section id="users-page" aria-label="Gestão de usuários" hidden>
+        <div class="section-toolbar"><div><h2>Equipe e acessos</h2><p id="users-scope-note"></p></div><label class="field inline-field"><span class="visually-hidden">Filtrar perfil de usuário</span><select id="user-role-filter"><option value="">Todos os perfis gerenciáveis</option></select></label></div>
+        <div class="table-card"><div class="table-scroll"><table><caption class="visually-hidden">Usuários que seu perfil pode gerenciar</caption><thead><tr><th scope="col">Pessoa</th><th scope="col">Perfil</th><th scope="col">Curso</th><th scope="col">Situação</th><th scope="col">Último acesso</th><th scope="col">Ações</th></tr></thead><tbody id="users-body"></tbody></table></div><div id="users-state" class="table-state" role="status"></div><div class="table-footer"><span id="users-loaded"></span><button type="button" id="more-users" class="button button-secondary" hidden>Carregar mais usuários</button></div></div>
+      </section>
+
+      <section id="students-page" aria-label="Consulta de alunos" hidden>
+        <div class="section-toolbar"><div><h2>Alunos do seu escopo</h2><p>Consulte o cadastro e os indicadores disponíveis de cada estudante.</p></div><span id="students-permission" class="badge"></span></div>
+        <div class="table-card"><div class="table-scroll"><table><caption class="visually-hidden">Alunos do escopo autorizado</caption><thead><tr><th scope="col">Aluno</th><th scope="col">Matrícula</th><th scope="col">Curso</th><th scope="col">Período</th><th scope="col">Situação</th><th scope="col">Ações</th></tr></thead><tbody id="students-body"></tbody></table></div><div id="students-state" class="table-state" role="status"></div><div class="table-footer"><span id="students-loaded"></span><button type="button" id="more-students" class="button button-secondary" hidden>Carregar mais alunos</button></div></div>
+      </section>
+      <section id="restricted-page" class="restricted-card" hidden><svg class="icon"><use href="./assets/icons.svg#shield"/></svg><h2>Seu acesso setorial está preservado</h2><p>Esta área atende à gestão por curso. Para o atendimento do CAEst ou da PRAE, utilize o módulo institucional já disponível.</p></section>
+      <footer class="content-footer"><strong>RADACHE</strong><span>Programa de apoio ao estudante · UNEMAT, Câmpus de Cáceres</span></footer>
+    </main>
+  </div>
+
+  <dialog id="user-dialog" class="modal" aria-labelledby="user-dialog-title"><form id="user-form"><header class="dialog-heading"><div><span class="eyebrow">GESTÃO DE ACESSOS</span><h2 id="user-dialog-title">Novo acesso</h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Fechar formulário"><svg class="icon"><use href="./assets/icons.svg#close"/></svg></button></header><p id="user-dialog-note" class="dialog-description">A pessoa receberá um convite por e-mail para definir sua própria senha.</p><div id="user-identity-fields"><label class="field"><span>Nome completo</span><input name="nome" maxlength="150" autocomplete="name" required></label><label class="field"><span>E-mail</span><input type="email" name="email" maxlength="254" autocomplete="email" required></label></div><label class="field"><span>Perfil</span><select name="perfil" id="user-profile" required></select></label><label class="field" id="user-campus-field"><span>Câmpus autorizado</span><select name="campusId" id="user-campus"><option value="caceres">Cáceres</option><option value="varzea-grande">Várzea Grande</option><option value="cuiaba">Cuiabá</option></select></label><label class="field" id="user-course-field"><span>Cursos atribuídos (Ctrl para selecionar vários)</span><select name="cursoIds" id="user-course" multiple size="5"></select></label><p id="user-form-error" class="form-message error" role="alert" hidden></p><footer class="dialog-footer"><button type="button" class="button button-secondary" data-close-dialog>Cancelar</button><button type="submit" id="user-save" class="button button-primary">Criar acesso e enviar convite</button></footer></form></dialog>
+
+  <dialog id="confirm-dialog" class="modal modal-small" aria-labelledby="confirm-title"><form id="confirm-form"><header class="dialog-heading"><div><span class="eyebrow">CONFIRMAR ALTERAÇÃO</span><h2 id="confirm-title"></h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Fechar confirmação"><svg class="icon"><use href="./assets/icons.svg#close"/></svg></button></header><p id="confirm-message" class="dialog-description"></p><p id="confirm-error" class="form-message error" role="alert" hidden></p><footer class="dialog-footer"><button type="button" class="button button-secondary" data-close-dialog>Cancelar</button><button type="submit" id="confirm-submit" class="button button-primary">Confirmar</button></footer></form></dialog>
+
+  <dialog id="ticket-dialog" class="drawer" aria-labelledby="ticket-detail-title"><header class="drawer-heading"><div><div class="protocol-line"><span id="detail-protocol"></span><button type="button" id="copy-protocol" class="icon-button" aria-label="Copiar protocolo"><svg class="icon"><use href="./assets/icons.svg#copy"/></svg></button></div><h2 id="ticket-detail-title">Detalhes do atendimento</h2><div id="detail-badges" class="badge-row"></div></div><button type="button" class="icon-button" data-close-dialog aria-label="Fechar atendimento"><svg class="icon"><use href="./assets/icons.svg#close"/></svg></button></header><div id="detail-state" class="alert" role="status" hidden></div><div id="detail-content"><div class="detail-summary"><dl id="detail-metadata" class="metadata-grid"></dl><p id="detail-description" class="preserve-lines"></p><button type="button" id="assume-ticket" class="button button-secondary" hidden>Assumir atendimento</button></div><section class="timeline-section" aria-labelledby="timeline-title"><div class="section-toolbar"><h3 id="timeline-title">Linha do tempo</h3><span class="muted small-text">Histórico do atendimento</span></div><ol id="timeline" class="timeline"></ol><button type="button" id="more-history" class="button button-secondary" hidden>Carregar histórico anterior</button></section><section id="ticket-action-panel" class="action-panel" aria-labelledby="action-title"><h3 id="action-title">Registrar atendimento</h3><form id="ticket-action-form"><label class="field"><span>O que você deseja registrar?</span><select id="ticket-action-type" name="acao"><option value="comentario">Registrar uma ação</option><option value="status">Alterar status</option><option value="classificacao">Classificar chamado</option><option value="responsavel">Atribuir responsável</option></select></label><label id="action-status-field" class="field" hidden><span>Próximo status</span><select id="action-status" name="status"></select></label><label id="action-category-field" class="field" hidden><span>Categoria</span><select id="action-category" name="categoria"></select></label><label id="action-responsible-field" class="field" hidden><span>Responsável</span><select id="action-responsible" name="uid"></select></label><label id="action-text-field" class="field"><span id="action-text-label">Descreva a ação realizada</span><textarea id="action-text" name="texto" rows="4" maxlength="9500" placeholder="Registre o que foi analisado, realizado ou solicitado." required></textarea></label><label id="action-visible-field" class="check-field"><input id="action-visible" name="visivelAoAluno" type="checkbox">Visível ao aluno</label><p id="action-help" class="muted small-text"></p><p id="ticket-action-error" class="form-message error" role="alert" hidden></p><div class="dialog-footer"><button type="submit" id="ticket-action-save" class="button button-primary">Registrar ação</button></div></form></section><p id="ticket-resolved-note" class="resolved-note" hidden><svg class="icon"><use href="./assets/icons.svg#check"/></svg>Atendimento resolvido. O histórico permanece disponível para consulta.</p></div></dialog>
+
+  <dialog id="student-dialog" class="modal modal-wide" aria-labelledby="student-detail-title"><header class="dialog-heading"><div><span class="eyebrow">FICHA DO ESTUDANTE</span><h2 id="student-detail-title">Dados do aluno</h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Fechar ficha do aluno"><svg class="icon"><use href="./assets/icons.svg#close"/></svg></button></header><div id="student-detail-state" class="alert" role="status" hidden></div><div id="student-detail-content"><dl id="student-metadata" class="metadata-grid"></dl><h3 class="subheading">Indicadores registrados</h3><dl id="student-assessment" class="metadata-grid"></dl><p class="muted small-text">Os indicadores são apresentados conforme registrados no sistema.</p></div></dialog>
+
+  <dialog id="student-edit-dialog" class="modal modal-wide" aria-labelledby="student-edit-title"><form id="student-form"><header class="dialog-heading"><div><span class="eyebrow">CADASTRO DE ALUNOS</span><h2 id="student-edit-title">Novo aluno</h2></div><button type="button" class="icon-button" data-close-dialog aria-label="Fechar cadastro do aluno"><svg class="icon"><use href="./assets/icons.svg#close"/></svg></button></header><div class="form-grid"><label class="field"><span>Nome completo</span><input name="nome" maxlength="150" autocomplete="name" required></label><label class="field"><span>Matrícula</span><input name="matricula" maxlength="30" required></label><label class="field"><span>Curso</span><select name="cursoId" id="student-course" required></select></label><label class="field"><span>Campus</span><input name="campus" value="Câmpus de Cáceres" maxlength="100" required></label><label class="field"><span>Período</span><input name="periodo" type="number" min="1" max="16" required></label><label class="field"><span>Situação</span><select name="status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option><option value="formado">Formado</option><option value="trancado">Trancado</option></select></label><label class="field"><span>E-mail</span><input type="email" name="email" maxlength="254" autocomplete="email" required></label><label class="field"><span>Telefone</span><input name="telefone" maxlength="30" autocomplete="tel" required></label></div><p id="student-form-error" class="form-message error" role="alert" hidden></p><footer class="dialog-footer"><button type="button" class="button button-secondary" data-close-dialog>Cancelar</button><button type="submit" id="student-save" class="button button-primary">Salvar aluno</button></footer></form></dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div><span id="announcer" class="visually-hidden" role="status" aria-live="polite"></span>
+  <noscript><p class="noscript">Ative o JavaScript para entrar no RADACHE.</p></noscript>
+</body>
+</html>
