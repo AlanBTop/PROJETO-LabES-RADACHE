@@ -197,7 +197,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
         body = self._body()
         self._login_ticket = security.LOGIN_LIMITER.reserve(self.client_address[0], body.get('usuario', body.get('login', body.get('email'))))
         if self._login_ticket is None:
-            raise gestao_local.ErroLocal(429, 'Limite de tentativas atingido. Aguarde 15 minutos.')
+            raise gestao_local.ErroLocal(429, 'Limite de tentativas atingido. Aguarde 1 minuto.')
         return body
 
     def _guard_data(self):

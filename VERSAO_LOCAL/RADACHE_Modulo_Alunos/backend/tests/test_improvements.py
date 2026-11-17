@@ -105,7 +105,9 @@ class Improvements(unittest.TestCase):
             self.assertTrue(limiter.allow('ip1', 'user' + str(i)))
         self.assertFalse(limiter.allow('ip1', 'different'))
         self.assertTrue(limiter.allow('ip2', 'different'))
-        now[0] += 901
+        now[0] += 59
+        self.assertFalse(limiter.allow('ip1', 'user0'))
+        now[0] += 1
         self.assertTrue(limiter.allow('ip1', 'user0'))
         ticket = limiter.reserve('ip3', 'ok')
         limiter.release(ticket)

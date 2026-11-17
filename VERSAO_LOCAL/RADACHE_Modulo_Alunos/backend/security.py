@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 
 
 class LoginLimiter:
-    def __init__(self, limit=5, window=900, clock=time.monotonic):
+    def __init__(self, limit=5, window=60, clock=time.monotonic):
         self.limit, self.window, self.clock = limit, window, clock
         self.attempts = {}
         self.lock = threading.RLock()
