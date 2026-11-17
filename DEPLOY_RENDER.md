@@ -1,6 +1,8 @@
 # RADACHE02/26LabES — publicação gratuita no Render
 
-**Situação: configuração preparada; aplicação ainda não publicada.** O endereço pretendido é `https://radache02-26labes.onrender.com`, sujeito à disponibilidade do nome na conta. É um subdomínio da hospedagem, sem registro de domínio próprio.
+**Situação: publicado e verificado em 17/11/2026.** Acesse **https://radache02-26labes.onrender.com**. É um subdomínio da hospedagem, sem registro de domínio próprio.
+
+O deploy `dep-dbu7bh5ckfvc73bapaf0`, do commit `10993b3e36a66b61cd6fbb74344f5d50e0e53501`, ficou `live` às 15:43 UTC. O serviço pertence ao Alan's workspace, confirmado pelo titular, com uma instância `free`, deploy automático desligado e sincronização automática do blueprint desativada. [Painel do serviço](https://dashboard.render.com/web/srv-dbu7bglckfvc73bap9b0).
 
 ## Escopo e custo
 
@@ -30,20 +32,21 @@ O blueprint pede ao Render para gerar quatro senhas iniciais distintas. Nenhuma 
 | `coord@radache.local` | Gestor de Ciência da Computação, Cáceres | `RADACHE_EVALUATION_MANAGER_PASSWORD` |
 | `diretor-caceres@radache.local` | Diretor de Cáceres, consulta | `RADACHE_EVALUATION_DIRECTOR_PASSWORD` |
 
-O responsável deve consultar esses valores privadamente no painel do Render e entregar apenas os acessos necessários à professora por um canal adequado. Não colocar senhas em README, issues, screenshots ou mensagens públicas. O primeiro acesso começa em `/gestao/` e exige troca de senha; depois, entrar novamente com a senha escolhida e seguir o [guia de avaliação](GUIA_AVALIACAO.md). O administrador pode cadastrar um atendente fictício e atribuir atendimentos.
+O responsável deve abrir o [painel do serviço](https://dashboard.render.com/web/srv-dbu7bglckfvc73bap9b0), escolher **Environment** e consultar privadamente os valores dessas variáveis. Para começar como administrador, use `admin@radache.local` e o valor de `RADACHE_EVALUATION_ADMIN_PASSWORD` em **https://radache02-26labes.onrender.com/gestao/**. Entregue apenas os acessos necessários à professora por um canal adequado. Não colocar senhas em README, issues, screenshots ou mensagens públicas. O primeiro acesso exige troca de senha; depois, entrar novamente com a senha escolhida e seguir o [guia de avaliação](GUIA_AVALIACAO.md). O administrador pode cadastrar um atendente fictício e atribuir atendimentos.
 
 As outras contas pré-existentes recebem senhas aleatórias locais, não anunciadas ao público. As senhas de demonstração da versão local não autenticam no modo público. As dicas dessas senhas são ocultadas nas telas online.
 
 Um reinício do processo com os mesmos arquivos preserva a senha alterada. Se os bancos forem descartados pela plataforma, o provisionamento volta às senhas iniciais privadas configuradas no Render e exige nova troca. Todas as pessoas que usam o mesmo serviço compartilham os dados, respeitadas as permissões; as sessões em memória não sobrevivem a reinícios.
 
-## Procedimento após aprovação
+## Publicação realizada e próximas atualizações
 
-1. Conferir e aprovar o commit desta configuração antes de enviá-lo ao GitHub.
-2. Instalar a integração Render e conectar a conta, ou acessar o painel do provedor. Login e eventual criação de conta são ações do titular; não fornecer tokens pelo chat.
-3. Após a aprovação explícita do deploy, criar o serviço pelo blueprint do repositório `AlanBTop/PROJETO-LabES-RADACHE`, branch `main`. Conferir `plan: free`, nenhum disco/banco pago e deploy automático desativado. A criação do serviço dispara o primeiro deploy, mesmo com auto-deploy desligado; não concluir essa criação antes da aprovação.
-4. Conferir o nome realmente atribuído e o valor automático de `RENDER_EXTERNAL_HOSTNAME`. Não presumir que o endereço desejado esteja disponível.
-5. Verificar HTTPS, `/healthz`, as sete páginas do roteiro, troca de senha inicial e permissões dos quatro perfis. Testar cadastro fictício, check-in simulado, histórico e gestão, sem mensagens externas.
-6. Atualizar o guia com o endereço ativo e com os resultados observados, mantendo a alternativa local.
+O blueprint `exs-dbu7bdkipgvc73au7btg` foi planejado e aplicado pela integração Render após as aprovações do deploy gratuito e do workspace. O Render gerou as quatro senhas privadas; seus valores não foram consultados nem publicados na validação.
+
+Às 15:44 UTC, passaram 41 verificações no endereço público: sete páginas, 22 arquivos de interface referenciados por elas, `/healthz`, configuração pública, quatro APIs privadas sem sessão, mock de mensagens sem sessão, recusa de origem externa, recusa da senha demonstrativa local, bloqueio GET/POST do webhook e ausência de um caminho de acessos iniciais. O cliente validou o certificado HTTPS e verificou os cabeçalhos CSP, X-Content-Type-Options e X-Frame-Options nas respostas de sucesso. Nenhum erro apareceu na consulta de logs de aplicação com nível `error` após os testes.
+
+Os testes públicos não autenticaram contas nem executaram JavaScript no navegador. Troca de senha, permissões dos quatro perfis, cadastro, check-ins e histórico passaram anteriormente sob HTTPS local; ainda precisam ser conferidos com os acessos privados no serviço público. Veja [VALIDACAO_ENTREGA.md](VALIDACAO_ENTREGA.md).
+
+Para futuras alterações de código, enviar o commit ao GitHub e disparar um deploy manual no serviço existente. Mudanças de infraestrutura exigem planejar e revisar a sincronização do blueprint existente. Não criar outro serviço para atualizar este. Uma alteração apenas na documentação não inicia deploy com as configurações atuais.
 
 ## Limites e verificações
 
@@ -51,4 +54,4 @@ O modo público permite as simulações autenticadas e bloqueia WhatsApp real e 
 
 O backend continua sendo um protótipo baseado em `http.server`, que a documentação Python não recomenda para produção. O escopo é uma avaliação acadêmica temporária, com dados inventados, atrás do HTTPS da plataforma; não é uma implantação institucional. [Limitação da biblioteca](https://docs.python.org/3/library/http.server.html).
 
-Validação da configuração: `render.yaml` foi aceito pelo [schema oficial](https://render.com/schema/render.yaml.json), com uma instância Free, zero discos pagos, zero bancos gerenciados e zero senhas literais. Os testes locais e os limites de cobertura estão em [VALIDACAO_ENTREGA.md](VALIDACAO_ENTREGA.md). A validação local não prova que o deploy público funcionará; a etapa pública precisa ser executada e verificada depois da autorização.
+Validação da configuração: `render.yaml` foi aceito pelo [schema oficial](https://render.com/schema/render.yaml.json) e pelo planejamento do Render, com uma instância Free, zero discos pagos, zero bancos gerenciados e zero senhas literais. Os testes locais, públicos e os limites de cobertura estão em [VALIDACAO_ENTREGA.md](VALIDACAO_ENTREGA.md).

@@ -4,9 +4,11 @@ Protótipo acadêmico de acompanhamento estudantil. Utilize apenas dados inventa
 
 ## Começar
 
-Endereço público: **ainda não publicado**. O nome pretendido é `radache02-26labes.onrender.com`, subdomínio gratuito da hospedagem, sujeito à disponibilidade e à aprovação do deploy. O nome de apresentação é **RADACHE02/26LabES**. A aceitação desse subdomínio como requisito de domínio depende do critério da professora.
+Endereço público: **https://radache02-26labes.onrender.com**, publicado no Render Free em 17/11/2026. O nome de apresentação é **RADACHE02/26LabES**. A aceitação desse subdomínio como requisito de domínio depende do critério da professora.
 
-Quando o endereço estiver ativo, comece em `/gestao/` com o acesso privado fornecido pelo responsável, altere a senha inicial e entre novamente. As senhas públicas de exemplo abaixo são exclusivas do modo local `--demo`. No modo online, os dados são compartilhados e descartáveis; a suspensão ou reinício na hospedagem gratuita pode reiniciar a demonstração. Detalhes em [DEPLOY_RENDER.md](DEPLOY_RENDER.md).
+Comece em **https://radache02-26labes.onrender.com/gestao/** com o acesso privado fornecido pelo responsável, altere a senha inicial e entre novamente. O responsável encontra a senha inicial de `admin@radache.local` em **Environment → RADACHE_EVALUATION_ADMIN_PASSWORD**, no [painel do serviço](https://dashboard.render.com/web/srv-dbu7bglckfvc73bap9b0). As senhas públicas de exemplo abaixo são exclusivas do modo local `--demo`. No modo online, os dados são compartilhados e descartáveis; a suspensão ou reinício na hospedagem gratuita pode reiniciar a demonstração. Detalhes em [DEPLOY_RENDER.md](DEPLOY_RENDER.md).
+
+Para seguir as páginas e o roteiro abaixo online, substitua `http://localhost:8080` por `https://radache02-26labes.onrender.com`, mantendo o caminho. As sete páginas e seus arquivos de interface responderam na verificação pública. Os fluxos autenticados do roteiro foram testados sob HTTPS local e ainda precisam de conferência no ambiente público.
 
 No Windows, com Python 3 instalado, entre em `VERSAO_LOCAL` e abra `INICIAR_LOCAL.bat`. Mantenha a janela aberta e acesse http://localhost:8080/. Alternativa pelo terminal, dentro dessa pasta:
 
@@ -61,5 +63,5 @@ Para repetir sem apagar dados, crie outro aluno fictício com matrícula diferen
 - Cadastro acadêmico e conversas nesta demonstração são simulações locais; não há conexão verificada com SIGAA.
 - Há código de integração com a API da Meta, mas seu funcionamento real não foi testado nesta entrega. Não configure credenciais, lembretes nem webhook para avaliar a simulação.
 - O modo de contas próprias é separado da demonstração: `INICIAR_LOCAL.bat --secure --port 8082`. As senhas iniciais geradas ficam em arquivo privado junto ao banco e exigem troca no primeiro acesso em Gestão. Esse arquivo, bancos e chaves nunca devem ser publicados.
-- Não há publicação na internet nem domínio configurado nesta etapa. Dados, autenticação, acesso às simulações, HTTPS e persistência exigem revisão específica antes do deploy.
+- A publicação usa um subdomínio gratuito do Render, sem domínio próprio. O serviço pode suspender por inatividade e descartar seus bancos; utilize apenas dados fictícios e mantenha a alternativa local para apresentação.
 - Os resultados de testes desta preparação serão registrados em `VALIDACAO_ENTREGA.md`; a presença de uma rota no código não prova que todos os seus fluxos foram testados.

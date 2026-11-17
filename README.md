@@ -1,4 +1,8 @@
-# RADACHE — versão local para avaliação
+# RADACHE — avaliação acadêmica
+
+**Site publicado:** https://radache02-26labes.onrender.com — Render Free. Comece em [Gestão](https://radache02-26labes.onrender.com/gestao/) com os acessos privados de avaliação. O responsável consulta a senha inicial de `admin@radache.local` em **Environment → RADACHE_EVALUATION_ADMIN_PASSWORD** no [painel do serviço](https://dashboard.render.com/web/srv-dbu7bglckfvc73bap9b0). O primeiro login exige troca de senha. A senha demonstrativa local não funciona online.
+
+Sete páginas e seus arquivos de interface passaram na verificação pública. Os fluxos autenticados foram validados sob HTTPS local; sua conferência pública depende dos acessos privados. No Free, o serviço pode suspender por inatividade e os dados fictícios são descartáveis. Veja o [guia de avaliação](GUIA_AVALIACAO.md). As instruções abaixo permitem executar a alternativa local.
 
 O RADACHE é um protótipo acadêmico de apoio ao acompanhamento de estudantes. Esta versão executa no próprio computador, com Python e SQLite. As telas de mensagens e a integração acadêmica são simulações: não enviam mensagens ao WhatsApp e não se conectam ao SIGAA.
 
@@ -83,4 +87,4 @@ O modo `--demo` aceita acesso somente no próprio computador. Sem essa opção, 
 
 O código também contém um adaptador para a API real do WhatsApp, dependente de credenciais e configuração externas. Ele não foi validado como integração real nesta entrega. Para a avaliação, não configure variáveis `WHATSAPP_*` nem ative `RADACHE_WHATSAPP_LEMBRETES`.
 
-**Endereço público:** ainda não publicado. O endereço do GitHub disponibiliza o código. A configuração de avaliação gratuita para **RADACHE02/26LabES** está em [DEPLOY_RENDER.md](DEPLOY_RENDER.md) e `render.yaml`, com subdomínio pretendido `radache02-26labes.onrender.com`, sujeito à disponibilidade. A publicação exige aprovação específica e verificação do endereço ativo; os dados SQLite do plano gratuito são descartáveis.
+**Endereço público:** https://radache02-26labes.onrender.com. A configuração de avaliação gratuita para **RADACHE02/26LabES** está em [DEPLOY_RENDER.md](DEPLOY_RENDER.md) e `render.yaml`. O deploy foi aprovado, publicado e verificado em 17/11/2026; os dados SQLite do plano gratuito são descartáveis.

@@ -1,6 +1,17 @@
-# Validação da preparação local — 17/11/2026
+# Validação da entrega e publicação — 17/11/2026
 
-Origem: `LAB_engenharia_radache/VERSAO_LOCAL`, preservada sem alterações. Preparação em clone separado, baseado em `main` no commit `1292570fcb63e55b0667572d51719980265b2ce8`. Backup remoto separado no mesmo commit. A atualização local foi publicada no GitHub em `753e2141a481556805f5f5b01c72e4397b631632` e validada em clone limpo. A configuração pública descrita adiante ainda depende de aprovação para novo push e deploy.
+Origem: `LAB_engenharia_radache/VERSAO_LOCAL`, preservada sem alterações. Preparação em clone separado, baseado em `main` no commit `1292570fcb63e55b0667572d51719980265b2ce8`. Backup remoto separado no mesmo commit. A atualização local foi publicada no GitHub em `753e2141a481556805f5f5b01c72e4397b631632` e validada em clone limpo. A configuração pública foi aprovada, enviada no commit `10993b3e36a66b61cd6fbb74344f5d50e0e53501` e publicada em 17/11/2026.
+
+## Verificação pública no Render Free
+
+- URL: **https://radache02-26labes.onrender.com**. Serviço `srv-dbu7bglckfvc73bap9b0`, blueprint `exs-dbu7bdkipgvc73au7btg`, workspace confirmado pelo titular. Uma instância `free`, sem banco gerenciado ou disco pago, auto-deploy e auto-sync desligados.
+- Deploy `dep-dbu7bh5ckfvc73bapaf0` do commit `10993b3e36a66b61cd6fbb74344f5d50e0e53501`, confirmado `live` às **15:43:09 UTC**, com Python **3.13.18** escolhido pelo Render a partir de `.python-version`.
+- **41 verificações aprovadas, zero falhas**, concluídas às **15:44:19 UTC**. HTTP 200 nas sete páginas e em 22 arquivos de interface referenciados diretamente por elas. Certificado HTTPS validado pelo cliente, com CSP, X-Content-Type-Options e X-Frame-Options nas respostas de sucesso.
+- `/healthz` retornou somente serviço e estado; `/public-config.json` confirmou o modo de avaliação. Quatro APIs privadas e o mock de mensagens recusaram acesso sem sessão. Origem externa recusada com 403; senha pública local recusada com 401; webhook GET/POST indisponível com 404; caminho de acessos iniciais não encontrado.
+- Consulta posterior de logs de aplicação filtrados por nível `error` retornou vazia. As senhas iniciais foram geradas pelo Render e não foram lidas, alteradas ou publicadas. Nenhum WhatsApp real foi enviado.
+- Relatório e auxiliar em `_validacao_local/render-public.json` e `_validacao_local/verify_render_public.py`, fora do Git. A primeira tentativa foi bloqueada pela rede do sandbox; a execução com permissão de rede passou.
+
+Esta verificação pública usou requisições HTTP, sem executar JavaScript no navegador ou autenticar as contas. Troca de senha, permissões dos quatro perfis, cadastro, check-ins e histórico continuam cobertos pelos testes locais abaixo; esses fluxos ainda não foram repetidos no serviço público. Os testes locais não equivalem a essa validação autenticada pública.
 
 ## Preparação para Render Free — resultado mais recente
 
@@ -62,4 +73,4 @@ Oito e-mails institucionais declarados fictícios nos seeds foram substituídos 
 
 A revisão do índice verificou 176 arquivos rastreados e encontrou 15 adições, 39 alterações e 1 remoção. Não identificou caminhos proibidos ou correspondências aos padrões de chaves privadas e tokens pesquisados. A única remoção é `VERSAO_LOCAL/whatsapp_api.py`, o módulo legado aprovado. Os arquivos novos incluem o guia, este relatório, os módulos de credenciais/segurança/privacidade/manutenção e a tela de troca de senha; os demais ajustes atualizam a versão local selecionada, testes e documentação.
 
-A aplicação atual restringe o modo demonstrativo ao loopback; seu inicializador também define o host local. Antes do deploy é necessário tratar separadamente a configuração do servidor, Host permitido, HTTPS, permissões dos endpoints, proteção das simulações e persistência SQLite. Há código de integração real da Meta, não validado nesta entrega. O domínio próprio ainda precisa ser confirmado com a professora. Não há URL pública ativa nesta preparação.
+A aplicação restringe o modo demonstrativo ao loopback; seu inicializador local define o host local. O inicializador público separado configura Host permitido, HTTPS atrás do proxy, autenticação e proteção das simulações. Os bancos SQLite no Free são descartáveis. Há código de integração real da Meta, bloqueado no modo público e não validado como integração real nesta entrega. O domínio próprio ainda precisa ser confirmado com a professora. A URL pública e os limites das verificações estão registrados no início deste relatório.
