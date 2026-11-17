@@ -1,0 +1,11 @@
+.evaluation-notice {
+  box-sizing: border-box;
+  width: 100%;
+  padding: .65rem 1rem;
+  background: #eaf2ff;
+  color: #173d68;
+  border-bottom: 1px solid #b9cce3;
+  font: 500 .8rem/1.5 system-ui, sans-serif;
+  text-align: center;
+  overflow-wrap: anywhere;
+}

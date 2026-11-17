@@ -1,8 +1,25 @@
 # Validação da preparação local — 17/11/2026
 
-Origem: `LAB_engenharia_radache/VERSAO_LOCAL`, preservada sem alterações. Preparação em clone separado, baseado em `main` no commit `1292570fcb63e55b0667572d51719980265b2ce8`. Backup remoto separado no mesmo commit. Push e deploy ainda não realizados.
+Origem: `LAB_engenharia_radache/VERSAO_LOCAL`, preservada sem alterações. Preparação em clone separado, baseado em `main` no commit `1292570fcb63e55b0667572d51719980265b2ce8`. Backup remoto separado no mesmo commit. A atualização local foi publicada no GitHub em `753e2141a481556805f5f5b01c72e4397b631632` e validada em clone limpo. A configuração pública descrita adiante ainda depende de aprovação para novo push e deploy.
 
-## Resultado atual
+## Preparação para Render Free — resultado mais recente
+
+- **176 testes aprovados, zero falhas, zero erros e zero testes ignorados**, em 426 segundos, incluindo oito testes novos de configuração pública, autenticação, troca obrigatória, perfis, CSRF, arquivos privados e bloqueio do WhatsApp real. A suíte foi executada com Python 3.13.11 em bancos temporários e sem conexões externas.
+- `render.yaml` validado contra o schema oficial do Render: um serviço `free`, zero discos pagos, zero bancos gerenciados, deploy automático desligado e nenhuma senha literal no blueprint.
+- Edge com Python 3.14.7: sete páginas responderam sob HTTPS de teste e exibiram a indicação de avaliação. O nome de host de teste foi resolvido exclusivamente para 127.0.0.1; foi usado um certificado descartável local, sem acesso ao domínio público pretendido. Isso não valida o certificado ou a publicação no Render.
+- Sob HTTPS de teste, administrador, analista, gestor e diretor completaram primeiro login, troca obrigatória e novo acesso. O analista continuou impedido de consultar dados individuais.
+- Cadastro fictício, busca em lista paginada, dois check-ins, recarga, avanço de mês, busca no painel e histórico individual com índice final 7,5 passaram. A inicialização repetida com os mesmos bancos preservou a senha alterada.
+- Portal, alunos, mensagens e painel em 390 e 1440 px sem transbordamento horizontal. Nenhum erro JavaScript ou requisição externa observado no roteiro. O screenshot móvel do painel foi inspecionado visualmente.
+- O roteiro original local foi repetido na porta 8080 e passou: identidade do servidor, sete páginas, cadastro/edição, conversa persistente, segundo mês, painel e login na gestão. Somente os servidores criados para os testes foram encerrados.
+- O comando real `python VERSAO_LOCAL/RADACHE_Modulo_Alunos/backend/run_web.py` foi iniciado em processo separado, com porta livre e três bancos temporários. `/healthz` respondeu sem caminhos físicos e a API anônima respondeu HTTP 401. O processo de teste foi encerrado ao concluir.
+
+Os artefatos locais de validação ficam em `_validacao_local/`, fora do commit: `unittest.json`, `public-https.json`, `browser.json` e `render-schema.json`. Os auxiliares de teste não contêm credenciais reais; senhas fictícias transitórias e o certificado de teste não integram a publicação.
+
+O teste HTTPS precisou tratar handshakes em threads para que sockets pré-abertos pelo navegador não bloqueassem o servidor de teste. O backend do Render utiliza HTTP atrás do proxy HTTPS da plataforma, sem esse adaptador TLS local. Também foram adaptadas as esperas e buscas do roteiro para o catálogo inicial com 60 alunos.
+
+O modo público usa credenciais privadas, permite a troca inicial do analista, compartilha a sessão de navegação entre Gestão e as outras áreas, valida hosts públicos explícitos e bloqueia integrações externas. A execução local continua selecionada pelo inicializador anterior. Veja a configuração e as limitações em [DEPLOY_RENDER.md](DEPLOY_RENDER.md).
+
+## Histórico da atualização local publicada
 
 - Suíte completa após os ajustes aprovados: **168 executados e aprovados, zero falhas, zero erros e zero testes ignorados**, em 179 segundos. A dependência do inventário histórico ausente foi removida conforme a aprovação específica, mantendo as 20 combinações de respostas.
 - Servidor iniciado com `run_local.py --demo --no-browser --port 8080`, com três bancos temporários. A porta foi verificada antes da inicialização e `/healthz` confirmou a pasta do clone de trabalho e o modo demonstrativo. Somente o processo iniciado para a verificação foi encerrado.

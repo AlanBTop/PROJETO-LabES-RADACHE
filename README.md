@@ -83,4 +83,4 @@ O modo `--demo` aceita acesso somente no próprio computador. Sem essa opção, 
 
 O código também contém um adaptador para a API real do WhatsApp, dependente de credenciais e configuração externas. Ele não foi validado como integração real nesta entrega. Para a avaliação, não configure variáveis `WHATSAPP_*` nem ative `RADACHE_WHATSAPP_LEMBRETES`.
 
-**Endereço público:** ainda não publicado. O endereço do GitHub disponibiliza o código. Domínio e hospedagem serão definidos e publicados após aprovação específica; a versão atual exige análise de autenticação, proxy HTTPS, Host permitido e persistência antes de exposição à internet.
+**Endereço público:** ainda não publicado. O endereço do GitHub disponibiliza o código. A configuração de avaliação gratuita para **RADACHE02/26LabES** está em [DEPLOY_RENDER.md](DEPLOY_RENDER.md) e `render.yaml`, com subdomínio pretendido `radache02-26labes.onrender.com`, sujeito à disponibilidade. A publicação exige aprovação específica e verificação do endereço ativo; os dados SQLite do plano gratuito são descartáveis.

@@ -202,6 +202,14 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
 
     def _guard_data(self):
         path=urllib.parse.urlsplit(self.path).path
+        public = security.public_evaluation()
+        if public:
+            host = self.headers.get('Host', '')
+            health = path == '/healthz' and host in {'localhost', '127.0.0.1'}
+            if len(self.headers.get_all('Host', [])) != 1 or not (health or security.allowed_public_host(host)):
+                self._descartar_corpo(); self._json(403, {'sucesso': False, 'erro': 'Endereço não permitido.'}); return False
+            if path.startswith('/webhooks/'):
+                self._descartar_corpo(); self._json(404, {'sucesso': False, 'erro': 'Integração indisponível na avaliação.'}); return False
         protected = path.startswith(('/api/', '/simulation-api/', '/mock-api/'))
         if protected:
             host = self.headers.get('Host', '')
@@ -209,7 +217,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
                 hostname = urllib.parse.urlsplit('//' + host).hostname
             except ValueError:
                 hostname = None
-            allowed = security.loopback(hostname) or hostname == os.environ.get('RADACHE_HOST', '127.0.0.1')
+            allowed = security.allowed_public_host(host) if public else security.loopback(hostname) or hostname == os.environ.get('RADACHE_HOST', '127.0.0.1')
             if not allowed or (credential_policy.demo() and not security.loopback(self.client_address[0])):
                 self._descartar_corpo(); self._json(403, {'sucesso': False, 'erro': 'Origem não permitida.'}); return False
             if self.command in {'POST', 'PUT', 'PATCH', 'DELETE'}:
@@ -229,6 +237,10 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
                 rbac.audit(self.sessao,path,{},405);self._descartar_corpo();self._json(405,{'sucesso':False,'erro':'Indicadores institucionais são somente leitura.'});return False
             return True
         current=self._session(self._token())
+        if public and path.startswith('/mock-api/'):
+            if not self._proteger_api():return False
+            if self.sessao['perfil'] not in rbac.OPERATIONAL or self.sessao['perfil'] == 'diretor_campus':
+                self._descartar_corpo(); self._json(403, {'sucesso': False, 'erro': 'Perfil sem acesso à simulação.'}); return False
         if path.startswith('/mock-api/') and current and current['perfil'] in {rbac.ANALYST,rbac.ATTENDANT}:
             rbac.audit(current,path,{},403);self._descartar_corpo();self._json(403,{'sucesso':False,'erro':'Perfil institucional: somente leitura agregada.'});return False
         return True
@@ -259,7 +271,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
             if sessao['perfil']==rbac.ATTENDANT and not (path.startswith(('/api/local/','/api/v1/')) or path in ('/api/session','/api/logout')):
                 rbac.audit(sessao,path,{},403);self._descartar_corpo()
                 self._json(403,{'sucesso':False,'erro':'Atendente: utilize somente seus atendimentos atribuídos.'});return False
-            if sessao['perfil']==rbac.ANALYST and not (path.startswith('/api/institucional/') or path in ('/api/session','/api/logout','/api/local/sessao','/api/local/logout','/api/v1/sessao','/api/v1/logout')):
+            if sessao['perfil']==rbac.ANALYST and not (path.startswith('/api/institucional/') or path in ('/api/session','/api/logout','/api/local/sessao','/api/local/logout','/api/v1/sessao','/api/v1/logout','/api/local/senha','/api/v1/senha')):
                 rbac.audit(sessao,path,{},403);self._descartar_corpo()
                 self._json(403,{'sucesso':False,'erro':'Analista Institucional: somente indicadores agregados.'});return False
             return True
@@ -284,6 +296,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
         return False
 
     def do_OPTIONS(self):
+        if security.public_evaluation() and not self._guard_data():return
         self._json(200, {})
 
     def do_HEAD(self):
@@ -309,7 +322,11 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
             if path.startswith("/api/mock-alunos"):
                 return mock_alunos.responder(self)
             if path == "/healthz":
+                if security.public_evaluation():
+                    return self._json(200, {"servico": "radache-avaliacao", "status": "ok"})
                 return self._json(200, {"servico": "radache-local", "versao": 3, "moduloAlunos": "sqlite-simulacao", "demonstracao": credential_policy.demo(), "pasta": str(CURRENT_DIR.parent.parent)})
+            if path == '/public-config.json':
+                return self._json(200, {'publicEvaluation': security.public_evaluation(), 'name': 'RADACHE02/26LabES'})
             if path.startswith(("/api/v1/", "/api/local/")):
                 return gestao_local.responder(self)
             if path in ("/", "/index.html"):
@@ -459,7 +476,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
                         s=self._session(result['token']);sessao=dict(token=result['token'],username=s['username'],role=s['perfil'],trocaSenhaObrigatoria=s.get('trocaSenhaObrigatoria', False),expires_at=int(__import__('time').time())+28800)
                     except Exception:pass
                 if not sessao:
-                    return self._json(401 if auth.usuarios else 503, {"sucesso": False, "erro": "Usuário ou senha inválidos."})
+                    return self._json(401 if auth.usuarios or security.public_evaluation() else 503, {"sucesso": False, "erro": "Usuário ou senha inválidos."})
                 self._set_session_cookie(sessao['token'])
                 return self._json(200, {"sucesso": True, "token": sessao["token"], "usuario": {
                     "username": sessao["username"], "role": sessao["role"], "expires_at": sessao["expires_at"], "trocaSenhaObrigatoria": sessao.get("trocaSenhaObrigatoria", False)

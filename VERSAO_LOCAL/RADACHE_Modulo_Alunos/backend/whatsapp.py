@@ -84,6 +84,8 @@ COMANDOS_REVOGACAO = {
 
 def _configuracao():
     """Lê as credenciais do ambiente e exige o mínimo necessário para enviar."""
+    if os.environ.get('RADACHE_PUBLIC_EVALUATION') == '1':
+        raise RuntimeError('WhatsApp real desativado na avaliação pública.')
     token = os.environ.get("WHATSAPP_ACCESS_TOKEN", "").strip()
     phone_id = os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "").strip()
     if not token or not phone_id:

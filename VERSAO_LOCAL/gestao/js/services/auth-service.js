@@ -2,7 +2,9 @@
 export class AuthService {
   constructor() { this.user = null; this.credencial = ''; this.callbacks = new Set(); }
   async preparar() {
-    if (!['127.0.0.1', 'localhost', '[::1]'].includes(location.hostname)) throw new Error('Use o servidor local para abrir esta versão.');
+    if (['127.0.0.1', 'localhost', '[::1]'].includes(location.hostname)) return;
+    const response = await fetch('/public-config.json', {cache:'no-store'});
+    if (!response.ok || !(await response.json()).publicEvaluation) throw new Error('Use o servidor local ou o endereço autorizado de avaliação.');
   }
   observar(callback) { this.callbacks.add(callback); callback(this.user); return () => this.callbacks.delete(callback); }
   avisar() { for (const callback of this.callbacks) callback(this.user); }
@@ -12,13 +14,15 @@ export class AuthService {
     if (!response.ok) throw new Error(payload.erro?.mensagem || 'Não foi possível entrar.');
     if(payload.dados.usuario.trocaSenhaObrigatoria){location.replace('/assets/change-password.html');return;}
     if(payload.dados.usuario.perfil==='analista_institucional'){location.replace('/institucional/');return;}
-    this.credencial = payload.dados.token; this.user = payload.dados.usuario; this.avisar();
+    this.credencial = payload.dados.token; this.user = payload.dados.usuario;
+    sessionStorage.setItem('radache_token', this.credencial); this.avisar();
   }
   async token() { if (!this.credencial) throw new Error('Entre novamente.'); return this.credencial; }
   async claims() { return this.user; }
   async sair() {
     const token = this.credencial; this.credencial = ''; this.user = null; this.avisar();
-    if (token) await fetch('/api/local/logout', { method: 'POST', credentials:'omit', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: '{}' });
+    sessionStorage.removeItem('radache_token');
+    if (token) await fetch('/api/local/logout', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: '{}' });
   }
   async recuperarSenha() { throw new Error('Consulte o responsável pelo cadastro para recuperar o acesso. Não há envio de e-mail nesta versão.'); }
 }

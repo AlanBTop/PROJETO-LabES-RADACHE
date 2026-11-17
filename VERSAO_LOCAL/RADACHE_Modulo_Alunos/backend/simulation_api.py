@@ -68,4 +68,5 @@ def respond(handler):
 
 def store_enabled():
     import os
-    return os.environ.get('RADACHE_ENV','development')=='development'
+    return (os.environ.get('RADACHE_ENV','development')=='development'
+            or os.environ.get('RADACHE_PUBLIC_EVALUATION')=='1')

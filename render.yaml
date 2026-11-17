@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: radache02-26labes
+    runtime: python
+    plan: free
+    region: virginia
+    branch: main
+    autoDeployTrigger: "off"
+    buildCommand: python -m compileall -q VERSAO_LOCAL/RADACHE_Modulo_Alunos/backend
+    startCommand: python VERSAO_LOCAL/RADACHE_Modulo_Alunos/backend/run_web.py
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: RADACHE_DATA_DIR
+        value: /tmp/radache02-26labes
+      - key: RADACHE_EVALUATION_ADMIN_PASSWORD
+        generateValue: true
+      - key: RADACHE_EVALUATION_ANALYST_PASSWORD
+        generateValue: true
+      - key: RADACHE_EVALUATION_MANAGER_PASSWORD
+        generateValue: true
+      - key: RADACHE_EVALUATION_DIRECTOR_PASSWORD
+        generateValue: true

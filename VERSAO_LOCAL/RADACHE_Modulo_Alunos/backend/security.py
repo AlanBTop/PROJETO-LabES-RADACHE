@@ -1,6 +1,7 @@
 """Políticas HTTP locais e limitação compartilhada entre os aliases de login."""
 from collections import deque
 import ipaddress
+import os
 import threading
 import time
 from urllib.parse import urlsplit
@@ -42,6 +43,22 @@ class LoginLimiter:
 
 
 LOGIN_LIMITER = LoginLimiter()
+
+
+def public_evaluation():
+    return os.environ.get('RADACHE_PUBLIC_EVALUATION') == '1'
+
+
+def allowed_public_host(host):
+    try:
+        parsed = urlsplit('//' + host)
+        parsed.port  # Rejeita portas inválidas antes de consultar a lista.
+        if parsed.username or parsed.password or parsed.path or parsed.query or parsed.fragment:
+            return False
+        allowed = {v.strip().lower() for v in os.environ.get('RADACHE_ALLOWED_HOSTS', '').split(',') if v.strip()}
+        return bool(host and not any(c.isspace() for c in host) and parsed.hostname in allowed)
+    except ValueError:
+        return False
 
 
 def loopback(host):

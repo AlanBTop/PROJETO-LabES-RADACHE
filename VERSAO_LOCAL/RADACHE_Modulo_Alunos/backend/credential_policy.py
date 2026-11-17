@@ -11,6 +11,14 @@ from auth import gerar_hash_senha, ITERACOES_PBKDF2
 
 LOCK = threading.RLock()
 
+# Somente quatro contas fictícias têm senhas iniciais configuradas no provedor.
+EVALUATION_ACCOUNTS = {
+    'admin@radache.local': 'RADACHE_EVALUATION_ADMIN_PASSWORD',
+    'analista@radache.local': 'RADACHE_EVALUATION_ANALYST_PASSWORD',
+    'coord@radache.local': 'RADACHE_EVALUATION_MANAGER_PASSWORD',
+    'diretor-caceres@radache.local': 'RADACHE_EVALUATION_DIRECTOR_PASSWORD',
+}
+
 
 def demo():
     return os.environ.get('RADACHE_DEMO') == '1'
@@ -26,7 +34,12 @@ def provision(email):
             entries = json.loads(path.read_text(encoding='utf-8'))
         else:
             entries = {}
-        password = entries.setdefault(email, secrets.token_urlsafe(24))
+        initial = None
+        if os.environ.get('RADACHE_PUBLIC_EVALUATION') == '1' and email in EVALUATION_ACCOUNTS:
+            initial = os.environ.get(EVALUATION_ACCOUNTS[email], '')
+            if len(initial) < 16:
+                raise ValueError('Configure as senhas privadas de avaliação com pelo menos 16 caracteres.')
+        password = entries.setdefault(email, initial or secrets.token_urlsafe(24))
         # Arquivo externo ao conteúdo servido pelo HTTP; permissões restritas onde suportadas.
         path.parent.mkdir(parents=True, exist_ok=True)
         fd = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
