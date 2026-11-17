@@ -39,11 +39,11 @@ export class TablesView {
       group.append(el('span', 'avatar', iniciais(usuario.nome)), nomes); pessoa.append(group);
       const situacao = el('td'); situacao.append(el('span', `badge ${usuario.ativo ? 'badge-active' : 'badge-inactive'}`, usuario.ativo ? 'Ativo' : 'Inativo'));
       const actions = el('td'); const buttons = el('div', 'table-actions');
-      if (perm.gestor) buttons.append(button('Alterar acesso', undefined, 'editar-usuario', usuario.id));
-      if(perm.gestor&&(perm.admin||(usuario.cursoIds||[]).every(c=>(sessao.cursoIds||[sessao.cursoId]).includes(c))))buttons.append(button(usuario.ativo ? 'Desativar' : 'Reativar', usuario.ativo ? 'button button-secondary button-small' : 'button button-primary button-small', 'estado-usuario', usuario.id));
+      if (perm.gestor && !sessao.demonstracaoPublica) buttons.append(button('Alterar acesso', undefined, 'editar-usuario', usuario.id));
+      if(perm.gestor&&!sessao.demonstracaoPublica&&(perm.admin||(usuario.cursoIds||[]).every(c=>(sessao.cursoIds||[sessao.cursoId]).includes(c))))buttons.append(button(usuario.ativo ? 'Desativar' : 'Reativar', usuario.ativo ? 'button button-secondary button-small' : 'button button-primary button-small', 'estado-usuario', usuario.id));
       if(usuario.perfil==='atendente_academico'){
         buttons.append(button('Histórico',undefined,'historico-funcionario',usuario.id));
-        if(perm.transferir)buttons.append(button('Transferir de câmpus',undefined,'transferir-funcionario',usuario.id));
+        if(perm.transferir&&!sessao.demonstracaoPublica)buttons.append(button('Transferir de câmpus',undefined,'transferir-funcionario',usuario.id));
       }
       if (usuario.id === sessao.uid) buttons.querySelectorAll('button').forEach(node => { node.disabled = true; });
       actions.append(buttons);
@@ -66,3 +66,4 @@ export class TablesView {
     this.estado('alunos', estado);
   }
 }
+

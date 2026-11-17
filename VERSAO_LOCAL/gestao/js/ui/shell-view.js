@@ -65,7 +65,7 @@ export class ShellView {
     this.usuario = usuario;
     document.body.classList.toggle('attendance-personal',perm.atendente);
     $('#session-name').textContent = usuario.nome;
-    $('#session-profile').textContent = PERFIS[usuario.perfil] || usuario.perfil;
+    $('#session-profile').textContent = usuario.demonstracaoPublica ? 'Visitante da demonstração' : (PERFIS[usuario.perfil] || usuario.perfil);
     $('#session-avatar').textContent = iniciais(usuario.nome);
     const curso = cursos.find(item => item.id === usuario.cursoId);
     $('#scope-name').textContent = perm.admin ? 'Todos os câmpus' : usuario.perfil==='diretor_campus'?CAMPI[usuario.campusId]:curso?.nome || 'Cursos atribuídos';
@@ -81,7 +81,7 @@ export class ShellView {
     options($('#course-filter'), cursos.map(c => ({ id: c.id, nome: c.nome })), 'Todos os cursos');
     $('#scope-description').textContent = perm.admin ? 'Acesso técnico aos três câmpus.' : (CAMPI[usuario.campusId]||'Câmpus autorizado')+' · '+(usuario.perfil==='diretor_campus'?'consulta de todos os cursos do câmpus':'somente cursos atribuídos');
     $('#students-permission').textContent = perm.editarAluno ? 'Consulta e cadastro' : 'Somente consulta';
-    $('#users-scope-note').textContent = perm.admin ? 'Gerencie cargos, lotações e vínculos dos três câmpus.' : usuario.perfil==='diretor_campus'?'Consulte a equipe do câmpus e autorize transferências de lotação.':'Gerencie os vínculos dos seus cursos. Contagens de atendimentos limitadas ao seu escopo.';
+    $('#users-scope-note').textContent = usuario.demonstracaoPublica ? 'Nesta demonstração, a equipe está disponível somente para consulta.' : perm.admin ? 'Gerencie cargos, lotações e vínculos dos três câmpus.' : usuario.perfil==='diretor_campus'?'Consulte a equipe do câmpus e autorize transferências de lotação.':'Gerencie os vínculos dos seus cursos. Contagens de atendimentos limitadas ao seu escopo.';
     $('#login-screen').hidden = true; $('#app-shell').hidden = false;
     this.ocupado(false);
     $('#login-password').value = '';
@@ -104,7 +104,7 @@ export class ShellView {
     $('#users-page').hidden = pagina !== 'usuarios' || !perm.usuarios;
     $('#students-page').hidden = pagina !== 'alunos' || !perm.equipe;
     $('#restricted-page').hidden = perm.equipe;
-    $('#create-user-button').hidden = pagina !== 'usuarios' || !perm.gestor;
+    $('#create-user-button').hidden = pagina !== 'usuarios' || !perm.gestor || this.usuario?.demonstracaoPublica;
     $('#create-student-button').hidden = pagina !== 'alunos' || !perm.editarAluno;
     $('#metrics').hidden = !perm.equipe;
     document.querySelectorAll('[data-page]').forEach(link => {
@@ -127,3 +127,4 @@ export class ShellView {
     this.timer = setTimeout(() => { toast.hidden = true; }, 6000);
   }
 }
+

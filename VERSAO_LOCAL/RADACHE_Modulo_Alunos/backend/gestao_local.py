@@ -4,6 +4,7 @@ from datetime import datetime, timezone, timedelta
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import re
 import threading
@@ -113,6 +114,31 @@ def usuario_publico(row):
     return json.loads(row['dados'])
 
 
+def entrar_demonstracao():
+    """Cria uma sessão pública somente no protótipo de avaliação."""
+    exigir(os.environ.get('RADACHE_PUBLIC_EVALUATION') == '1',
+           'Demonstração indisponível.', 404)
+    uid = 'visitante-demonstracao'
+    with LOCK, closing(database.get_connection()) as conn, conn:
+        row = conn.execute('SELECT * FROM gestao_usuarios WHERE id=?', (uid,)).fetchone()
+        if not row:
+            usuario = {'id': uid, 'nome': 'Visitante da demonstração',
+                       'email': 'visitante-demonstracao@radache.local', 'perfil': 'admin_tecnico',
+                       'campusId': '', 'cursoId': '', 'cursoIds': [], 'ativo': True,
+                       'versaoAcesso': 1, 'trocaSenhaObrigatoria': False,
+                       'demonstracaoPublica': True, 'criadoEm': agora()}
+            cred = gerar_hash_senha(secrets.token_urlsafe(32))
+            conn.execute('INSERT INTO gestao_usuarios VALUES (?,?,?,?,?)',
+                         (uid, usuario['email'], json.dumps(usuario), cred['salt'], cred['password_hash']))
+        else:
+            usuario = usuario_publico(row)
+            exigir(usuario.get('demonstracaoPublica') and usuario.get('ativo')
+                   and usuario.get('perfil') == 'admin_tecnico',
+                   'Demonstração temporariamente indisponível.', 403)
+        token = SESSION_MANAGER.emitir({'uid': uid, 'versao': usuario['versaoAcesso']})
+        return {'token': token, 'usuario': {**usuario, 'uid': uid}}
+
+
 def legacy_user(legacy):
     email=legacy['username'] if '@' in legacy['username'] else legacy['username']+'@radache.local'
     try:
@@ -215,6 +241,12 @@ def tratar(method, caminho, query, body, token):
         token = SESSION_MANAGER.emitir({'uid': usuario['id'], 'versao': usuario['versaoAcesso']})
         return {'token': token, 'usuario': {**usuario, 'uid': usuario['id']}}
     usuario = sessao(token)
+    if usuario.get('demonstracaoPublica'):
+        recurso = caminho.split('/')[0]
+        exigir(not (caminho == 'senha' or
+                    (recurso in {'usuarios', 'responsaveis', 'funcionarios', 'transferencias'}
+                     and method != 'GET')),
+               'A demonstração permite consultar, mas não alterar contas e permissões.', 403)
     if caminho == 'logout' and method == 'POST':
         with LOCK:
             SESSOES.pop(token, None)
@@ -419,3 +451,4 @@ def responder(handler):
         handler._json(400, {'sucesso': False, 'erro': {'mensagem': str(erro)}})
     except Exception:
         handler._json(500, {'sucesso': False, 'erro': {'mensagem': 'Não foi possível concluir a operação local.'}})
+

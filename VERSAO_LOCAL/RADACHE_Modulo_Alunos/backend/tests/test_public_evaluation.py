@@ -107,6 +107,25 @@ class PublicHTTP(unittest.TestCase):
         self.assertEqual(self.http('/mock-api/mensagens',{})[0],401)
         self.assertEqual(self.http('/api/login',{'usuario':'admin@radache.local','senha':'admin123'})[0],401)
 
+    def test_demo_session_can_visit_pages_but_cannot_modify_private_accounts(self):
+        status, headers, body = self.http('/api/demo/login', {})
+        self.assertEqual(status, 200, body)
+        self.assertIn('HttpOnly', headers['Set-Cookie'])
+        self.assertTrue(body['dados']['usuario']['demonstracaoPublica'])
+        token = body['dados']['token']
+        auth = {'Authorization': 'Bearer ' + token}
+        for path in ('/api/session', '/api/local/sessao', '/api/local/usuarios',
+                     '/api/analytics', '/api/institucional/resumo', '/api/mock-alunos',
+                     '/simulation-api/alunos'):
+            self.assertEqual(self.http(path, headers=auth)[0], 200, path)
+        for path, method in (('/api/local/usuarios', 'POST'),
+                             ('/api/v1/usuarios/admin', 'PATCH'),
+                             ('/api/local/transferencias', 'POST'),
+                             ('/api/local/senha', 'POST')):
+            self.assertEqual(self.http(path, {}, auth, method)[0], 403, path)
+        with patch.dict(os.environ, {'RADACHE_PUBLIC_EVALUATION':'0'}):
+            self.assertNotEqual(self.http('/api/demo/login', {})[0], 200)
+
     def test_initial_password_does_not_unlock_data_before_change(self):
         token=self.login(change=False)
         for path in ('/api/alunos','/api/local/usuarios'):
@@ -148,3 +167,4 @@ class PublicHTTP(unittest.TestCase):
         with patch.dict(os.environ,{'WHATSAPP_ACCESS_TOKEN':'TESTE','WHATSAPP_PHONE_NUMBER_ID':'TESTE','WHATSAPP_API_VERSION':'TESTE'}), patch('whatsapp.urllib.request.urlopen') as send:
             with self.assertRaises(RuntimeError):whatsapp.enviar_texto('0000000000','TESTE')
             send.assert_not_called()
+

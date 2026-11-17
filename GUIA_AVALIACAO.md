@@ -4,9 +4,13 @@ Protótipo acadêmico de acompanhamento estudantil. Utilize apenas dados inventa
 
 ## Começar
 
+Para avaliar sem senha, abra o endereço público e clique em **Entrar na demonstração**. A sessão permite consultar os painéis e experimentar o cadastro e as conversas simuladas. Na área Equipe e acessos é possível consultar os perfis, mas a alteração de contas e permissões exige login privado. O botão aparece também nas demais páginas, para retomar a demonstração.
+
+Qualquer visitante do endereço pode usar a demonstração; todos compartilham os mesmos dados. Use somente informações fictícias e não inclua dados pessoais reais. A hospedagem gratuita pode reiniciar ou apagar os dados.
+
 Endereço público: **https://radache02-26labes.onrender.com**, publicado no Render Free em 17/11/2026. O nome de apresentação é **RADACHE02/26LabES**. A aceitação desse subdomínio como requisito de domínio depende do critério da professora.
 
-Comece em **https://radache02-26labes.onrender.com/gestao/** com o acesso privado fornecido pelo responsável, altere a senha inicial e entre novamente. O responsável encontra a senha inicial de `admin@radache.local` em **Environment → RADACHE_EVALUATION_ADMIN_PASSWORD**, no [painel do serviço](https://dashboard.render.com/web/srv-dbu7bglckfvc73bap9b0). As senhas públicas de exemplo abaixo são exclusivas do modo local `--demo`. No modo online, os dados são compartilhados e descartáveis; a suspensão ou reinício na hospedagem gratuita pode reiniciar a demonstração. Detalhes em [DEPLOY_RENDER.md](DEPLOY_RENDER.md).
+Para administrar contas, acesse **https://radache02-26labes.onrender.com/gestao/** com o acesso privado fornecido pelo responsável, altere a senha inicial e entre novamente. O responsável encontra a senha inicial de `admin@radache.local` em **Environment → RADACHE_EVALUATION_ADMIN_PASSWORD**, no [painel do serviço](https://dashboard.render.com/web/srv-dbu7bglckfvc73bap9b0). As senhas públicas de exemplo abaixo são exclusivas do modo local `--demo`. No modo online, os dados são compartilhados e descartáveis; a suspensão ou reinício na hospedagem gratuita pode reiniciar a demonstração. Detalhes em [DEPLOY_RENDER.md](DEPLOY_RENDER.md).
 
 Para seguir as páginas e o roteiro abaixo online, substitua `http://localhost:8080` por `https://radache02-26labes.onrender.com`, mantendo o caminho. As sete páginas e seus arquivos de interface responderam na verificação pública. Os fluxos autenticados do roteiro foram testados sob HTTPS local e ainda precisam de conferência no ambiente público.
 
@@ -65,3 +69,4 @@ Para repetir sem apagar dados, crie outro aluno fictício com matrícula diferen
 - O modo de contas próprias é separado da demonstração: `INICIAR_LOCAL.bat --secure --port 8082`. As senhas iniciais geradas ficam em arquivo privado junto ao banco e exigem troca no primeiro acesso em Gestão. Esse arquivo, bancos e chaves nunca devem ser publicados.
 - A publicação usa um subdomínio gratuito do Render, sem domínio próprio. O serviço pode suspender por inatividade e descartar seus bancos; utilize apenas dados fictícios e mantenha a alternativa local para apresentação.
 - Os resultados de testes desta preparação serão registrados em `VALIDACAO_ENTREGA.md`; a presença de uma rota no código não prova que todos os seus fluxos foram testados.
+

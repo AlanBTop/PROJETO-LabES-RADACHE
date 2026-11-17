@@ -23,6 +23,8 @@ O plano gratuito pode suspender o serviço após 15 minutos sem tráfego; a reto
 
 ## Acessos de avaliação
 
+Além das contas privadas abaixo, a versão pública oferece o botão **Entrar na demonstração**. Ele cria uma sessão de visitante sem senha, acessível a qualquer pessoa. Os dados fictícios da simulação são compartilhados entre visitantes e contas privadas; essa sessão não pode criar ou alterar contas nem mudar senhas. Nunca utilize dados reais neste ambiente.
+
 O blueprint pede ao Render para gerar quatro senhas iniciais distintas. Nenhuma senha privada de avaliação ou token está no Git, no HTML público ou nos logs do inicializador. As contas são fictícias:
 
 | Conta | Perfil | Variável privada no Render |
@@ -55,3 +57,4 @@ O modo público permite as simulações autenticadas e bloqueia WhatsApp real e 
 O backend continua sendo um protótipo baseado em `http.server`, que a documentação Python não recomenda para produção. O escopo é uma avaliação acadêmica temporária, com dados inventados, atrás do HTTPS da plataforma; não é uma implantação institucional. [Limitação da biblioteca](https://docs.python.org/3/library/http.server.html).
 
 Validação da configuração: `render.yaml` foi aceito pelo [schema oficial](https://render.com/schema/render.yaml.json) e pelo planejamento do Render, com uma instância Free, zero discos pagos, zero bancos gerenciados e zero senhas literais. Os testes locais, públicos e os limites de cobertura estão em [VALIDACAO_ENTREGA.md](VALIDACAO_ENTREGA.md).
+

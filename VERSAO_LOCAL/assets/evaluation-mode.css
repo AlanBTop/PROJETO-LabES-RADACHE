@@ -9,3 +9,19 @@
   text-align: center;
   overflow-wrap: anywhere;
 }
+.evaluation-demo-button {
+  display: inline-block;
+  margin: .25rem .5rem;
+  padding: .48rem .9rem;
+  border: 0;
+  border-radius: .45rem;
+  background: #173d68;
+  color: #fff;
+  font: 700 .8rem/1.25 system-ui, sans-serif;
+  cursor: pointer;
+}
+.evaluation-demo-button:hover { background: #0c2b50; }
+.evaluation-demo-button:focus-visible { outline: 3px solid #e4a83b; outline-offset: 2px; }
+.evaluation-demo-button:disabled { opacity: .65; cursor: wait; }
+.evaluation-demo-feedback { font-weight: 600; }
+

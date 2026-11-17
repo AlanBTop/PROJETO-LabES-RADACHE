@@ -1,6 +1,8 @@
 # RADACHE — avaliação acadêmica
 
-**Site publicado:** https://radache02-26labes.onrender.com — Render Free. Comece em [Gestão](https://radache02-26labes.onrender.com/gestao/) com os acessos privados de avaliação. O responsável consulta a senha inicial de `admin@radache.local` em **Environment → RADACHE_EVALUATION_ADMIN_PASSWORD** no [painel do serviço](https://dashboard.render.com/web/srv-dbu7bglckfvc73bap9b0). O primeiro login exige troca de senha. A senha demonstrativa local não funciona online.
+**Demonstração pública:** abra o site e selecione **Entrar na demonstração** para navegar sem senha. Qualquer visitante pode acessar e alterar dados da simulação compartilhada: use somente dados fictícios. A página de equipe fica disponível para consulta; alterações de contas e permissões exigem um acesso privado.
+
+**Site publicado:** https://radache02-26labes.onrender.com — Render Free. Para administrar contas, entre em [Gestão](https://radache02-26labes.onrender.com/gestao/) com um acesso privado. O responsável consulta a senha inicial de `admin@radache.local` em **Environment → RADACHE_EVALUATION_ADMIN_PASSWORD** no [painel do serviço](https://dashboard.render.com/web/srv-dbu7bglckfvc73bap9b0). O primeiro login privado exige troca de senha. A senha demonstrativa local não funciona online.
 
 Sete páginas e seus arquivos de interface passaram na verificação pública. Os fluxos autenticados foram validados sob HTTPS local; sua conferência pública depende dos acessos privados. No Free, o serviço pode suspender por inatividade e os dados fictícios são descartáveis. Veja o [guia de avaliação](GUIA_AVALIACAO.md). As instruções abaixo permitem executar a alternativa local.
 
@@ -88,3 +90,4 @@ O modo `--demo` aceita acesso somente no próprio computador. Sem essa opção, 
 O código também contém um adaptador para a API real do WhatsApp, dependente de credenciais e configuração externas. Ele não foi validado como integração real nesta entrega. Para a avaliação, não configure variáveis `WHATSAPP_*` nem ative `RADACHE_WHATSAPP_LEMBRETES`.
 
 **Endereço público:** https://radache02-26labes.onrender.com. A configuração de avaliação gratuita para **RADACHE02/26LabES** está em [DEPLOY_RENDER.md](DEPLOY_RENDER.md) e `render.yaml`. O deploy foi aprovado, publicado e verificado em 17/11/2026; os dados SQLite do plano gratuito são descartáveis.
+

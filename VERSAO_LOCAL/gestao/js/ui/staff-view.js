@@ -24,7 +24,7 @@ export class StaffView {
   session(){
     const actor=this.app.perfil;
     options($('#staff-campus'),Object.entries(CAMPI).filter(([id])=>this.app.perm.admin||id===actor.campusId).map(([id,nome])=>({id,nome})),null,actor.campusId||'caceres');
-    $('#staff-lookup').hidden=!this.app.perm.gestor;
+    $('#staff-lookup').hidden=!this.app.perm.gestor || !!actor.demonstracaoPublica;
     $('#staff-results').replaceChildren();$('#staff-search').value='';void this.transfers();
   }
   clear(){
@@ -90,8 +90,8 @@ export class StaffView {
   }
   async transfers(){
     const actor=this.app.perfil,target=$('#staff-transfers'),epoch=this.app.epoch;
-    target.replaceChildren();target.hidden=!this.app.perm.transferir;
-    if(!this.app.perm.transferir)return;
+    target.replaceChildren();target.hidden=!this.app.perm.transferir || !!actor.demonstracaoPublica;
+    if(target.hidden)return;
     try{const result=await this.app.api.requisitar('transferencias');if(epoch!==this.app.epoch)return;
       target.append(el('h3','','Transferências de funcionários entre câmpus'));
       for(const record of result.itens){const row=el('p');row.append(el('span','',`${record.nome} · ${CAMPI[record.origem]} → ${CAMPI[record.destino]} · ${record.status} · ${record.motivo} `));
@@ -100,3 +100,4 @@ export class StaffView {
     }catch(e){if(epoch===this.app.epoch)target.textContent=e.message;}
   }
 }
+

@@ -231,6 +231,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
                 if cross or invalid:
                     self._descartar_corpo(); self._json(403, {'sucesso': False, 'erro': 'Origem da operação não permitida.'}); return False
         if path in ('/api/login','/api/local/login','/api/v1/login'):return True
+        if path == '/api/demo/login' and public and self.command == 'POST':return True
         if path.startswith(('/api/','/simulation-api/')):
             if not self._proteger_api():return False
             if path.startswith('/api/institucional/') and self.command!='GET':
@@ -426,6 +427,16 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         path = urllib.parse.urlparse(self.path).path
         if not self._guard_data():return
+        if path == '/api/demo/login':
+            try:
+                self._body()
+                result = gestao_local.entrar_demonstracao()
+                self._set_session_cookie(result['token'])
+                return self._json(200, {'sucesso': True, 'dados': result})
+            except gestao_local.ErroLocal as exc:
+                return self._json(exc.status, {'sucesso': False, 'erro': exc.mensagem})
+            except (ValueError, json.JSONDecodeError, UnicodeDecodeError):
+                return self._json(400, {'sucesso': False, 'erro': 'Solicitação inválida.'})
         if path.startswith('/api/institucional/'):
             import institutional
             return institutional.respond(self)
@@ -642,3 +653,4 @@ def run_server(port=PORT, open_browser=False, start_page="/", start_pages=None):
 
 if __name__ == "__main__":
     run_server(int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else PORT)
+
