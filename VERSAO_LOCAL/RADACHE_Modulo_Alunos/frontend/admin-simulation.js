@@ -1,4 +1,4 @@
-﻿const $=id=>document.getElementById(id);
+const $=id=>document.getElementById(id);
 const dialog=$('student-dialog');
 let token=sessionStorage.getItem('radache_token')||'',catalog=[],courseCatalog=[],editing=null,page=1,ascending=true,generation=0;
 const pageSize=8;
@@ -103,7 +103,7 @@ $('login-form').onsubmit=event=>{
   event.preventDefault();const button=event.submitter;button.disabled=true;
   run(async()=>{try{
     const result=await api('/api/login','POST',{usuario:$('username').value,senha:$('password').value});
-    if(result.usuario?.role==='analista_institucional'){location.replace('/institucional/');return;}
+    if(result.usuario?.trocaSenhaObrigatoria){location.replace('/assets/change-password.html');return;}if(result.usuario?.role==='analista_institucional'){location.replace('/institucional/');return;}
     token=result.token;sessionStorage.setItem('radache_token',token);$('password').value='';await list();showWorkspace();
   }finally{button.disabled=false;}});
 };

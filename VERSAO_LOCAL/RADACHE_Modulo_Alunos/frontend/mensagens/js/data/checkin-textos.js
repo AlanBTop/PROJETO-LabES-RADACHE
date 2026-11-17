@@ -1,55 +1,50 @@
-/** Roteiro fornecido pelo projeto. Textos simulados; nenhum cadastro na Meta. */
+/** Catálogo compartilhado pelos simuladores JS e SQLite; nenhum envio à Meta. */
 export const CHECKIN_TEXTOS = Object.freeze({
-  boasVindas: `Olá! Aqui é o RADACHE, o programa de apoio ao estudante da UNEMAT, Câmpus de Cáceres.
-
-*O que é:* uma pesquisa curta, feita uma vez por mês, aqui no WhatsApp.
-
-*O que perguntamos:* 2 perguntas, uma sobre sua situação financeira e outra sobre como você está se sentindo. Leva cerca de 1 minuto.
-
-*Para quê:* ajudar a equipe de apoio (coordenação do curso, CAEst e PRAE) a perceber quando um estudante precisa de ajuda e oferecer apoio antes que ele pense em abandonar o curso.
-
-*Seus dados:*
-- A participação é voluntária.
-- Só a equipe de apoio vê suas respostas (LGPD).
-- Você pode sair quando quiser enviando REVOGAR, e suas respostas serão apagadas.
-- Esta autorização vale por 12 meses. Depois, perguntamos de novo.
-
-Você aceita participar?
-1 - Sim, aceito
-2 - Não, obrigado(a)`,
-  mensal: `Olá! Aqui é o RADACHE, da UNEMAT. É hora do seu acompanhamento mensal: são só 2 perguntas rápidas, sobre sua situação financeira e como você está se sentindo. Para começar, responda esta mensagem com 1. Se não quiser mais participar, envie REVOGAR.`,
-  lembrete: `Olá! Aqui é o RADACHE, da UNEMAT. Você ainda não terminou as 2 perguntas rápidas deste mês, e sua resposta ajuda a equipe de apoio a acompanhar você. Para continuar, é só responder esta mensagem. Se não quiser mais participar, envie REVOGAR.`,
-  financeira: `Obrigado! Vamos começar.
-
-Pergunta 1 de 2 — Situação financeira
-
-Pensando nas suas condições para continuar estudando (transporte, alimentação, moradia e materiais), como você está hoje?
-
-1 - Estou tranquilo(a), sem dificuldade
-2 - Tenho uma dificuldade leve
-3 - Tenho uma dificuldade significativa
-4 - Estou pensando em trancar o curso por motivo financeiro
-
-Responda apenas com o número da opção.`,
+  boasVindas: `Este check-in do RADACHE é uma simulação de duas perguntas para orientar o apoio ao estudante.`,
+  privacidade: `As perguntas são sobre sua situação financeira e como você tem se sentido.
+Só a equipe de apoio acessa suas respostas; sua autorização vale por 12 meses.`,
+  sair: `Participar é opcional; envie SAIR a qualquer momento para recusar ou revogar e apagar suas respostas.`,
+  consentimento: `Você aceita participar desta simulação?
+1 - Aceito
+2 - Recuso
+Responda apenas com o número da opção.
+Para sair: SAIR`,
+  mensal: `Você quer responder ao check-in simulado deste mês?
+1 - Começar
+2 - Recuso
+Responda apenas com o número da opção.
+Para sair: SAIR`,
+  lembrete: `Seu check-in simulado está pendente; a pergunta será repetida abaixo.
+Para encerrar sua participação, envie SAIR.`,
+  financeira: `Pergunta 1 de 2 — Situação financeira
+Hoje, como estão suas condições financeiras para continuar estudando?
+1 - Sem dificuldade
+2 - Dificuldade leve
+3 - Dificuldade significativa
+4 - Penso em trancar o curso por motivo financeiro
+Responda apenas com o número da opção.
+Para sair: SAIR`,
   emocional: `Pergunta 2 de 2 — Bem-estar emocional
-
-Pensando nas últimas semanas (estudos, rotina, cansaço e ansiedade), como você tem se sentido?
-
+Nas últimas semanas, como você tem se sentido?
 1 - Muito ruim
 2 - Ruim
 3 - Regular
 4 - Bom
 5 - Muito bom
-
-Responda apenas com o número da opção. Não existe resposta certa ou errada.
-
-Se estiver passando por um momento difícil, o CVV atende 24 horas pelo telefone 188.`,
-  encerramento: `Pronto, suas respostas foram registradas. Obrigado por participar!
-
-Se precisar de apoio, procure o CAEst ou a PRAE. Para cancelar sua participação e apagar suas respostas, envie REVOGAR.`,
-  recusa: `Tudo bem, nada foi registrado. Se mudar de ideia, envie INICIAR.`,
-  revogacao: `Seu consentimento foi cancelado e suas respostas foram apagadas. Para voltar a participar, envie INICIAR.`,
-  invalida: `Não entendi sua resposta. Responda apenas com o número de uma das opções.`,
-  respondido: `Suas respostas deste mês já foram registradas. Obrigado! Para cancelar sua participação, envie REVOGAR.`,
-  naoTexto: `No momento só consigo ler mensagens de texto. Responda com o número da opção.`,
+Responda apenas com o número da opção.
+Para sair: SAIR`,
+  apoio: `Se precisar de apoio, procure a equipe de apoio ao estudante da UNEMAT.
+O CVV atende 24 horas pelo telefone 188.`,
+  encerramento: `Obrigado, suas respostas foram registradas nesta simulação.
+A análise serve de apoio e não substitui a orientação de profissionais.`,
+  recusa: `Participação recusada; nenhuma resposta deste check-in foi registrada.
+Para tentar de novo, envie INICIAR.`,
+  revogacao: `Participação cancelada e respostas apagadas.
+Para tentar de novo, envie INICIAR.`,
+  invalida: `Responda apenas com o número da opção.`,
+  encerradoInvalido: `Obrigado pelo seu tempo; o check-in foi encerrado sem registrar respostas incompletas.
+Para tentar de novo, envie INICIAR.`,
+  respondido: `Suas respostas deste mês já foram registradas nesta simulação.
+Para revogar e apagar suas respostas, envie SAIR.`,
+  naoTexto: `Envie uma mensagem de texto com apenas o número da opção.`,
 });

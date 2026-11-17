@@ -116,7 +116,7 @@ function renderStudents(){
   const list=data.estudantes;
   $('student-count').textContent=fmt(list.total)+' estudantes';$('students-empty').hidden=!!list.total;
   $('student-table-body').replaceChildren(...list.itens.map(s=>{const row=el('tr');row.dataset.studentId=s.id;
-    const person=el('td');const name=el('span','student-name',s.nome);person.append(name,el('span','cell-subtitle',s.matricula));if(s.status!=='ativo')name.append(el('span','student-status','('+s.status+')'));
+    const person=el('td');const name=el('span','student-name',s.nome);person.append(name,el('span','cell-subtitle',s.matricula));if(s.status!=='ativo')name.append(el('span','student-status','('+s.status+')'));if(s.alerta_acolhimento)person.append(el('strong','cell-subtitle','Acolhimento NAE prioritário'));
     const risk=el('td');risk.append(badge(s.risco,s.indice));if(s.subiu_para_alto)risk.append(el('span','cell-subtitle','Passou de médio para alto'));
     if(s.evolucao_risco?.variacao!=null)risk.append(el('span','risk-change '+s.evolucao_risco.direcao,changeLabel(s.evolucao_risco)));
     const status=el('td');status.append(el('span','badge',statusNames[s.situacao]||s.situacao));if(!s.recebeu_atendimento&&s.questionarios)status.append(el('span','cell-subtitle','Sem ação da equipe registrada'));
@@ -163,6 +163,7 @@ function renderProfile(s){
   const root=el('div','profile-content'),summary=el('dl','profile-summary');
   for(const [label,value] of [['Matrícula',s.matricula],['Curso',s.curso],['Câmpus',s.campus],['Semestre',s.periodo+'º'],['Situação acadêmica',s.status],['Último check-in',dt(s.ultimo_acompanhamento,true)]]){const group=el('div');group.append(el('dt','',label),el('dd','',value));summary.append(group);}root.append(summary,badge(s.risco,s.indice));
   if(!s.atual)root.append(el('p','profile-note','Sem avaliação numérica válida. As respostas podem estar registradas sem índice, quando faltam média ou frequência para aplicar a fórmula.'));
+  if(s.alerta_acolhimento)root.append(el('p','profile-note wellbeing-alert','Atenção NAE: bem-estar informado como ruim ou muito ruim. Priorizar acolhimento e verificar o canal de apoio. Este alerta não é um diagnóstico.'));
   root.append(renderRiskHistory(s.evolucao_risco));
   root.append(el('h3','','Questionários e respostas do WhatsApp'));
   const questions=el('ul','profile-list'),emotions={1:'Muito ruim',2:'Ruim',3:'Regular',4:'Bom',5:'Muito bom'};
@@ -177,7 +178,7 @@ function resetFilters(){state={campus:'',curso:'',periodo:'',inicio:'',fim:'',ri
 function changed(){page=1;void load();}
 // Os limites do backend usam dias UTC, assim como as datas persistidas.
 const dateInput=d=>d.toISOString().slice(0,10);
-$('panel-login').onsubmit=async event=>{event.preventDefault();$('login-submit').disabled=true;$('login-error').hidden=true;try{const response=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usuario:$('login-user').value,senha:$('login-password').value})});const result=await response.json();if(!response.ok)throw new Error(result.erro||'Não foi possível entrar.');if(result.usuario?.role==="analista_institucional"){location.replace("/institucional/");return;}token=result.token;sessionStorage.setItem('radache_token',token);$('login-password').value='';await load();}catch(error){$('login-error').textContent=error.message;$('login-error').hidden=false;}finally{$('login-submit').disabled=false;}};
+$('panel-login').onsubmit=async event=>{event.preventDefault();$('login-submit').disabled=true;$('login-error').hidden=true;try{const response=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({usuario:$('login-user').value,senha:$('login-password').value})});const result=await response.json();if(!response.ok)throw new Error(result.erro||'Não foi possível entrar.');if(result.usuario?.trocaSenhaObrigatoria){location.replace('/assets/change-password.html');return;}if(result.usuario?.role==="analista_institucional"){location.replace("/institucional/");return;}token=result.token;sessionStorage.setItem('radache_token',token);$('login-password').value='';await load();}catch(error){$('login-error').textContent=error.message;$('login-error').hidden=false;}finally{$('login-submit').disabled=false;}};
 $('logout').onclick=async()=>{const old=token;clearAccess();try{await fetch('/api/logout',{method:'POST',headers:{Authorization:'Bearer '+old}});}catch{}};
 $('btn-refresh').onclick=()=>load();
 $('overview-campus').onchange=()=>{state.campus=$('overview-campus').value;state.curso='';writeHash();changed();};

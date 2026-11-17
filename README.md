@@ -18,7 +18,7 @@ O RADACHE é um protótipo acadêmico de apoio ao acompanhamento de estudantes. 
 Pelo terminal, na pasta `VERSAO_LOCAL`, use:
 
 ```powershell
-python RADACHE_Modulo_Alunos/backend/run_local.py
+python RADACHE_Modulo_Alunos/backend/run_local.py --demo
 ```
 
 No primeiro uso, o banco principal é criado automaticamente a partir do esquema e dos dados fictícios iniciais. Alguns painéis dependem de simulações e podem aparecer vazios ou com poucos dados até que a etapa 4 seja realizada.
@@ -74,3 +74,13 @@ O índice de risco é um indicador do protótipo para apoiar o acompanhamento; e
 - **Encerrar:** pressione Ctrl+C na janela do servidor.
 
 Os bancos SQLite com histórico de uso e os logs não acompanham o repositório. A estrutura do código está descrita em [VERSAO_LOCAL/ESTRUTURA.md](VERSAO_LOCAL/ESTRUTURA.md).
+
+## 7. Guia completo e limites da entrega
+
+Comece pelo [guia de avaliação](GUIA_AVALIACAO.md), com caminhos diretos, perfis, um cadastro fictício e o roteiro do check-in. Este README mantém o roteiro de avaliação anterior; o guia o complementa.
+
+O modo `--demo` aceita acesso somente no próprio computador. Sem essa opção, o inicializador seleciona bancos separados e credenciais próprias, com troca obrigatória da senha inicial. Esse modo continua sendo um protótipo.
+
+O código também contém um adaptador para a API real do WhatsApp, dependente de credenciais e configuração externas. Ele não foi validado como integração real nesta entrega. Para a avaliação, não configure variáveis `WHATSAPP_*` nem ative `RADACHE_WHATSAPP_LEMBRETES`.
+
+**Endereço público:** ainda não publicado. O endereço do GitHub disponibiliza o código. Domínio e hospedagem serão definidos e publicados após aprovação específica; a versão atual exige análise de autenticação, proxy HTTPS, Host permitido e persistência antes de exposição à internet.

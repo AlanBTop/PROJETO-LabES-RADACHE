@@ -4,15 +4,15 @@ Interface inspirada no WhatsApp Web, em **HTML5, CSS3 e JavaScript nativo com ES
 
 ## Simulação da conversa do aluno (modo padrão)
 
-Ao abrir `/mensagens/`, você assume o papel de um aluno fictício e conversa com o assistente RADACHE. A experiência usa exatamente os textos do roteiro fornecido pelo projeto, incluindo convite, perguntas, encerramento, recusa, revogação, resposta inválida, lembrete e áudio não suportado.
+Ao abrir `/mensagens/`, você assume o papel de um aluno fictício e conversa com o assistente RADACHE. O catálogo `checkin-textos.js` é compartilhado pelo simulador JavaScript e pelo servidor SQLite; nenhum envio chega ao WhatsApp. A [revisão dos textos](../../../../docs/checkin-textos-revisao.md) registra as perguntas anteriores, as novas e os testes executados.
 
-1. Selecione um aluno: no primeiro contato, o bot envia **radache_boas_vindas**, com a explicação completa e autorização por 12 meses. Responda **1** para aceitar ou **2** para recusar.
+1. Selecione um aluno: no primeiro contato, o bot informa que é uma simulação, explica o uso das respostas e pede autorização por 12 meses. Responda **1 - Aceito** ou **2 - Recuso** antes de qualquer pergunta sensível.
 2. Ao aceitar, responda a pergunta financeira (1–4) e a emocional (1–5), digitando ou usando as respostas rápidas.
 3. A conclusão mostra a mensagem de encerramento. Abra **Dados do check-in simulado** para conferir F e P. O protótipo não calcula o RE total, pois não possui todos os componentes acadêmicos.
-4. Teste **REVOGAR**: o consentimento e os valores F/P são limpos, e as respostas sensíveis no histórico visível são substituídas por “Resposta removida após revogação”. **INICIAR** pede novo consentimento.
+4. Teste **SAIR** a qualquer momento: recusa a participação antes do aceite ou revoga o consentimento após o aceite, limpa F/P e apaga as respostas. **REVOGAR** e **CANCELAR** continuam aceitos. **INICIAR** pede novo consentimento após revogação.
 5. Teste **+ 3 dias** em uma etapa pendente para receber o lembrete. O botão avança o relógio virtual, sem esperar tempo real. Há no máximo um lembrete por check-in; recusa, revogação e conclusão não geram lembretes.
-6. Use **Próximo mês**: com consentimento válido, o bot envia **radache_mensal** e entra em **aguardando_inicio**. Somente **1** inicia a pergunta financeira; essa resposta não altera a data do consentimento. **Reiniciar** restaura somente o aluno selecionado.
-7. O botão de nota musical **♪** simula uma mensagem de áudio, sem gravar ou acessar o microfone. O bot responde com o texto do roteiro para mídia não suportada.
+6. Use **Próximo mês**: com consentimento válido, o bot envia **radache_mensal** e entra em **aguardando_inicio**. **1** inicia a pergunta financeira sem alterar a data do consentimento; **2** recusa esse check-in. Nas escalas financeira e emocional, **2 continua sendo uma resposta válida**, por isso o comando para sair é **SAIR**.
+7. Resposta inválida ou áudio repete a mesma pergunta com orientação. Na segunda tentativa inválida da mesma pergunta, o ciclo é encerrado e as respostas incompletas desse ciclo são descartadas, inclusive do cache de retries; avaliações concluídas anteriormente são preservadas. **INICIAR** permite tentar novamente, respeitando a autorização vigente. A contagem persiste ao recarregar; reenviar a mesma operação não conta duas vezes.
 8. Use **+12 meses** para testar o vencimento: **radache_boas_vindas** substitui o mensal e pede novo aceite. Em **Dados do check-in simulado**, confira a data original e a validade; aceitar a renovação atualiza ambas.
 
 | Situação | Template simulado | Estado seguinte |

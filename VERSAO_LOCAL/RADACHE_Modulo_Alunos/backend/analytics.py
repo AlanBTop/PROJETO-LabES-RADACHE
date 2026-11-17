@@ -203,12 +203,13 @@ def evolution(students,f):
         nota='Coorte atual dos filtros; última avaliação válida conhecida ao final de cada mês com registros. Até 24 meses observados. Não representa evasão efetiva.')
 
 
-def student_row(a):
+def student_row(a, role='coordenacao'):
     assessment=a['avaliacao']
     ticket=a['atendimento']
     evolution=risk_history.describe(a['avaliacoes_recorte'])
     return dict(id=a['id'],nome=a['nome'],matricula=a['matricula'],curso=a['curso'],campus=a['campus'],periodo=a['periodo'],status=a['status'],
         risco=a['risco'],indice=assessment['indice_risco'] if assessment else None,
+        alerta_acolhimento=role in {'coordenacao', 'nae'} and bool(a['respondidos']) and str(a['respondidos'][-1].get('emocional')) in {'1', '2'},
         ultima_avaliacao=assessment['data_avaliacao'] if assessment else None,ultimo_acompanhamento=a['ultimo_questionario'],
         situacao=a['situacao_acompanhamento'],atendimento_id=ticket['id'] if ticket else None,
         questionarios=len(a['questionarios_recorte']),subiu_para_alto=a['subiu_para_alto'],recebeu_atendimento=a['recebeu_atendimento'],
@@ -254,7 +255,7 @@ def overview(query,role='coordenacao',scope=None):
     periods=[dict(periodo=p,**metrics([a for a in selected if a['periodo']==p])) for p in sorted({a['periodo'] for a in selected})]
     students=[]
     if f['curso']:
-        students=[student_row(a) for a in selected]
+        students=[student_row(a,role) for a in selected]
         search=norm(query.get('busca',''))
         students=[a for a in students if search in norm(a['nome']+' '+a['matricula'])]
         order=query.get('ordenar_alunos','risco')
@@ -286,9 +287,10 @@ def detail(ident,role='coordenacao',scope=None):
     student=next((a for a in source() if a['id']==ident),None)
     if not student:return None
     if scope and not rbac.student_allowed(dict(perfil='diretor_campus' if scope['cursoIds'] is None else 'gestor_curso',**scope),student):return None
-    a=prepare(student,filters({}));result=student_row(a)
+    a=prepare(student,filters({}));result=student_row(a,role)
     history=a['historico_valido']
     result['historico_avaliacoes']=[{k:v for k,v in e.items() if role=='coordenacao' or k in {'data_avaliacao','indice_risco','classificacao_risco','situacao_psicologica'}} for e in history]
+    result['alerta_acolhimento'] = role in {'coordenacao', 'nae'} and bool(a['respondidos']) and str(a['respondidos'][-1].get('emocional')) in {'1', '2'}
     result['questionarios']=[q if role=='coordenacao' else {k:v for k,v in q.items() if k!='financeira'} for q in a['respondidos']]
     result['atendimentos']=[{k:v for k,v in t.items() if k in {'id','protocolo','status','abertoEm','ultimaAtividadeEm','responsavel'} or role=='coordenacao'} for t in a['atendimentos']]
     result['variacao']=round(history[-1]['indice_risco']-history[-2]['indice_risco'],2) if len(history)>=2 else None

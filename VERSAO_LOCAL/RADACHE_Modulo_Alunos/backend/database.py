@@ -71,6 +71,7 @@ def init_db(force_reseed=False):
 
     # Migração idempotente: Garante campos de estado conversacional do WhatsApp
     migrate_checkin_conversation(cursor)
+    migrate_whatsapp_privacy(cursor)
     migrate_risk_history(cursor)
 
     # Verifica se há necessidade de carregar os discentes de teste (Seed)
@@ -87,8 +88,22 @@ def init_db(force_reseed=False):
     conn.commit()
     conn.close()
     
-    # Sincroniza classes legadas para obedecer às regras vigentes da Sprint 2
-    reclassificar_avaliacoes()
+    # Histórico preservado; reclassificação disponível apenas como migração explícita.
+
+
+def migrate_whatsapp_privacy(cursor):
+    import privacy
+    privacy.initialize(cursor)
+    columns = {r['name'] for r in cursor.execute('PRAGMA table_info(alunos)')}
+    digits = "replace(replace(replace(replace(replace(replace(NEW.telefone,' ',''),'+',''),'(',''),')',''),'-',''),'.','')"
+    canonical = "CASE WHEN length(" + digits + ") IN (10,11) THEN '55'||" + digits + " ELSE " + digits + " END"
+    if 'telefone_normalizado' not in columns:
+        cursor.execute('ALTER TABLE alunos ADD COLUMN telefone_normalizado TEXT')
+    cursor.execute('CREATE INDEX IF NOT EXISTS aluno_telefone_normalizado ON alunos(telefone_normalizado)')
+    for action in ('INSERT', 'UPDATE OF telefone'):
+        name = 'telefone_insert' if action == 'INSERT' else 'telefone_update'
+        cursor.execute('CREATE TRIGGER IF NOT EXISTS '+name+' AFTER '+action+' ON alunos BEGIN UPDATE alunos SET telefone_normalizado='+canonical+' WHERE id=NEW.id; END')
+    cursor.execute('UPDATE alunos SET telefone_normalizado=' + canonical.replace('NEW.', '') + ' WHERE telefone_normalizado IS NULL')
 
 
 def migrate_risk_history(cursor):
@@ -177,7 +192,7 @@ def recalcular_avaliacao_por_checkin(checkin_id, conn=None):
     )
     from risk import calcular_financeiro, calcular_psicologico
     def situacao(valor):
-        return "estavel" if valor <= 33 else "moderada" if valor < 67 else "critica"
+        return {'estavel': 'estavel', 'moderado': 'moderada', 'critico': 'critica'}[classificar_risco(valor)]
     evaluation=dict(aluno_id=checkin['aluno_id'],nota_media=avaliacao['nota_media'],frequencia=avaliacao['frequencia'],
         indice_risco=indice,classificacao_risco=classificar_risco(indice),
         situacao_financeira=situacao(calcular_financeiro(checkin['resposta_financeira'])),
@@ -196,7 +211,7 @@ def get_dashboard_metrics():
     - total_alunos   : Total de discentes visíveis (status_exclusao = 0).
     - alunos_ativos  : Total com matrícula ativa na instituição.
     - alunos_criticos: Estudantes com risco de evasão >= 67% (Alerta Vermelho).
-    - alunos_moderados: Estudantes com risco entre 34% e 66% (Alerta Amarelo).
+    - alunos_moderados: Estudantes com risco maior que 33% e menor que 67% (Alerta Amarelo).
     - alunos_estaveis: Estudantes com risco <= 33% (Verde).
     
     A consulta utiliza subquery analítica para buscar apenas a avaliação mais recente de cada aluno.
@@ -330,6 +345,34 @@ def get_aluno_by_id(aluno_id):
     return aluno
 
 
+def _validar_avaliacao(data):
+    campos = ('nota_media', 'frequencia', 'resposta_financeira', 'resposta_psicologica')
+    if not any(k in data for k in campos + ('indice_risco',)):
+        return None
+    if any(data.get(k) is None for k in campos):
+        raise ValueError('Uma avaliação exige média, frequência e respostas financeira e psicológica.')
+    indice = calcular_indice_risco(*(data[k] for k in campos))
+    if 'indice_risco' in data and float(data['indice_risco']) != indice:
+        raise ValueError('O índice informado diverge dos componentes da avaliação.')
+    return indice
+
+
+def _gravar_avaliacao(cursor, aluno_id, data, indice):
+    from risk import calcular_financeiro, calcular_psicologico
+    def situacao(valor):
+        return {'estavel': 'estavel', 'moderado': 'moderada', 'critico': 'critica'}[classificar_risco(valor)]
+    previous = cursor.execute('SELECT * FROM avaliacoes WHERE aluno_id=? ORDER BY id DESC LIMIT 1', (aluno_id,)).fetchone()
+    evaluation = dict(aluno_id=aluno_id, nota_media=float(data['nota_media']), frequencia=float(data['frequencia']),
+                      resposta_financeira=data['resposta_financeira'], resposta_psicologica=str(data['resposta_psicologica']),
+                      situacao_financeira=situacao(calcular_financeiro(data['resposta_financeira'])),
+                      situacao_psicologica=situacao(calcular_psicologico(data['resposta_psicologica'])),
+                      indice_risco=indice, classificacao_risco=classificar_risco(indice),
+                      data_avaliacao=datetime.now(timezone.utc).isoformat(), origem_dados='avaliacao_manual')
+    evaluation['metadados_risco'] = json.dumps(risk_history.snapshot(evaluation, dict(previous) if previous else None, 'avaliacao_manual', ''), ensure_ascii=False)
+    fields = list(evaluation)
+    cursor.execute('INSERT INTO avaliacoes (' + ','.join(fields) + ') VALUES (' + ','.join('?' for _ in fields) + ')', [evaluation[k] for k in fields])
+
+
 def create_aluno(data):
     """Cadastra um novo aluno no banco provisório com validação de unicidade da matrícula."""
     with closing(get_connection()) as conn, conn:
@@ -358,28 +401,10 @@ def create_aluno(data):
         )
         aluno_id = cursor.lastrowid
 
-        # Sem avaliação informada, não inventa um índice inicial.
-        if 'indice_risco' not in data:
+        indice = _validar_avaliacao(data)
+        if indice is None:
             return aluno_id
-        indice = float(data['indice_risco'])
-        # A classe sempre deriva do índice calculado; não confiamos no valor enviado pelo cliente.
-        classificacao = classificar_risco(indice)
-
-        cursor.execute(
-            """
-            INSERT INTO avaliacoes (aluno_id, nota_media, frequencia, situacao_financeira, situacao_psicologica, indice_risco, classificacao_risco, data_avaliacao)
-            VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            """,
-            (
-                aluno_id,
-                data.get('nota_media'),
-                data.get('frequencia'),
-                data.get("situacao_financeira", "estavel"),
-                data.get("situacao_psicologica", "estavel"),
-                indice,
-                classificacao,
-            )
-        )
+        _gravar_avaliacao(cursor, aluno_id, data, indice)
 
         return aluno_id
 
@@ -414,25 +439,9 @@ def update_aluno(aluno_id, data):
         )
 
         # Se dados de avaliação foram informados na edição, registra nova avaliação
-        if "indice_risco" in data:
-            indice = float(data["indice_risco"])
-            # A classe sempre deriva do índice calculado; não confiamos no valor enviado pelo cliente.
-            classif = classificar_risco(indice)
-            cursor.execute(
-                """
-                INSERT INTO avaliacoes (aluno_id, nota_media, frequencia, situacao_financeira, situacao_psicologica, indice_risco, classificacao_risco, data_avaliacao)
-                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                """,
-                (
-                    aluno_id,
-                    float(data.get("nota_media", 7.0)),
-                    float(data.get("frequencia", 85.0)),
-                    data.get("situacao_financeira", "estavel"),
-                    data.get("situacao_psicologica", "estavel"),
-                    indice,
-                    classif
-                )
-            )
+        indice = _validar_avaliacao(data)
+        if indice is not None:
+            _gravar_avaliacao(cursor, aluno_id, data, indice)
 
 
 def delete_aluno(aluno_id, modo="logica"):

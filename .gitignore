@@ -6,3 +6,23 @@ __pycache__/
 *.log
 .env
 .env.*
+.venv/
+.runtime/
+.emulator-data/
+validacao/
+_validacao_local/
+ARQUIVO/
+fase4_trabalho_temporario/
+DOCUMENTACAO/
+APRESENTACAO/
+VERSAO_INTEGRACAO Pausada/
+VERSAO_FIREBASE Pausada/
+*.db-*
+*.sqlite-*
+*.sqlite3-*
+*.acessos-iniciais.json
+*.telefone.key
+*.pem
+*.key
+*.tmp
+*.bak

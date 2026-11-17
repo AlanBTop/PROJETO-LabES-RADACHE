@@ -54,7 +54,7 @@ try:
         page.screenshot(path=str(OUT/'grupos-protegidos.png'),full_page=True,animations='disabled')
         for endpoint in ['/api/alunos','/api/analytics/students/1','/simulation-api/alunos','/api/local/usuarios']:
             assert context.request.get(base+endpoint).status==403,endpoint
-        assert context.request.post(base+'/api/institucional/resumo',data={}).status==405
+        assert context.request.post(base+'/api/institucional/resumo',data={},headers={'Origin':base}).status==405
         data=context.request.get(base+'/api/institucional/resumo').json()
         assert 'PRIVADO' not in str(data)
         page.goto(base+'/gestao/')

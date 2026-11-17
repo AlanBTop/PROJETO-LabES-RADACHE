@@ -56,6 +56,7 @@ function renderCatalog() {
 $('login-form').addEventListener('submit', event => {
   event.preventDefault(); run(event.submitter, async () => {
     const result = await api('/api/login', 'POST', {usuario: $('username').value, senha: $('password').value});
+    if(result.usuario?.trocaSenhaObrigatoria){location.replace('/assets/change-password.html');return;}
     token = result.token; sessionStorage.setItem('radache_token', token); $('password').value = '';
     try { await list(); } catch (error) { reset(); throw error; }
     $('login').hidden = true; $('workspace').hidden = false;

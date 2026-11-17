@@ -99,6 +99,10 @@ export class SimulationController {
     try {
       const data=await this.request(`/alunos/${id}/conversa`,body);
       this.accept(id,data); this.pending.delete(id); this.rascunhos.delete(id);
+      if (body.acao === 'responder') {
+        const confirmed = [...data.mensagens].reverse().find(m => m.remetente === 'aluno');
+        record.payload = { ...body, texto: confirmed?.conteudo || 'Resposta descartada.' };
+      }
       if(data.aviso)this.view.notificar(data.aviso);
       this.view.atualizarInspecao({...record,estado:'confirmado',status:200,resposta:{persistido:true,sessao_id:data.sessao_id}});
     } catch(error) {

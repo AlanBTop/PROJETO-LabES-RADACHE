@@ -34,6 +34,7 @@ export class CheckinSimulator {
     this.sessoes.set(id, {
       etapa: 'consentimento', consentimento: false, dataConsentimento: null,
       financeira: null, emocional: null, concluidoMes: null,
+      tentativasInvalidas: 0,
       instante, diaCalendario: new Date(instante).getDate(), ultimaInteracao: instante, lembreteEnviado: false,
     });
     return this.abrirCiclo(this.sessoes.get(id));
@@ -48,12 +49,24 @@ export class CheckinSimulator {
   abrirCiclo(s) {
     const valido = this.consentimentoValido(s);
     Object.assign(s, {
+      ciclo: (s.ciclo || 0) + 1,
       etapa: valido ? 'aguardando_inicio' : 'consentimento', consentimento: valido,
       financeira: null, emocional: null, concluidoMes: null,
-      ultimaInteracao: s.instante, lembreteEnviado: false,
+      ultimaInteracao: s.instante, lembreteEnviado: false, tentativasInvalidas: 0,
     });
     return valido ? [texto('mensal', 'radache_mensal · simulado')] :
-      [texto('boasVindas', 'radache_boas_vindas · simulado')];
+      [texto('boasVindas', 'radache_boas_vindas · simulado'), texto('privacidade'), texto('sair'), texto('consentimento')];
+  }
+
+  pergunta(s) {
+    return { consentimento: 'consentimento', aguardando_inicio: 'mensal', financeira: 'financeira', emocional: 'emocional' }[s.etapa];
+  }
+
+  invalida(s, orientacao = 'invalida') {
+    s.tentativasInvalidas = (s.tentativasInvalidas || 0) + 1;
+    if (s.tentativasInvalidas < 2) return { mensagens: [texto(orientacao), texto(this.pergunta(s))], sensivel: false, revogado: false, descartarEntrada: true };
+    Object.assign(s, { etapa: 'encerrado', financeira: null, emocional: null, concluidoMes: null });
+    return { mensagens: [texto('encerradoInvalido')], sensivel: false, revogado: false, descartarEntrada: true, descartarIncompletas: true };
   }
 
   /** Snapshot da data de autorização/validade e componentes; não calcula o RE total. */
@@ -86,53 +99,58 @@ export class CheckinSimulator {
     const s = this.sessoes.get(id);
     s.ultimaInteracao = s.instante;
     const saida = mensagens => ({ mensagens, sensivel: false, revogado: false });
-    if (tipo !== 'texto') return saida([texto('naoTexto')]);
     const comando = conteudo.trim().toUpperCase();
-    if (comando === 'REVOGAR') {
+    if (tipo === 'texto' && ['SAIR', 'REVOGAR', 'CANCELAR'].includes(comando)) {
+      const recusado = !this.consentimentoValido(s) && ['consentimento', 'recusado'].includes(s.etapa);
       Object.assign(s, {
-        etapa: 'revogado', consentimento: false, dataConsentimento: null,
-        financeira: null, emocional: null, concluidoMes: null,
+        etapa: recusado ? 'recusado' : 'revogado', consentimento: false, dataConsentimento: null,
+        financeira: null, emocional: null, concluidoMes: null, tentativasInvalidas: 0,
       });
-      return { mensagens: [texto('revogacao')], sensivel: false, revogado: true };
+      return { mensagens: [texto(recusado ? 'recusa' : 'revogacao')], sensivel: false, revogado: true };
     }
     // Uma resposta da etapa antiga não pode aceitar a renovação implicitamente.
     if (!this.consentimentoValido(s) && ['aguardando_inicio', 'financeira', 'emocional', 'concluido'].includes(s.etapa)) {
-      return saida(this.abrirCiclo(s));
+      return { ...saida(this.abrirCiclo(s)), descartarEntrada: true };
     }
     if (s.concluidoMes === MES(s.instante)) return saida([texto('respondido')]);
     if (s.etapa === 'concluido') return saida(this.abrirCiclo(s));
-    if (comando === 'INICIAR') {
+    if (tipo === 'texto' && comando === 'INICIAR') {
       if (['financeira', 'emocional'].includes(s.etapa)) return saida([texto(s.etapa)]);
       return saida(this.abrirCiclo(s));
     }
     if (s.etapa === 'recusado') return saida([texto('recusa')]);
     if (s.etapa === 'revogado') return saida([texto('revogacao')]);
+    if (s.etapa === 'encerrado') return { ...saida([texto('encerradoInvalido')]), descartarEntrada: true };
+    if (tipo !== 'texto') return this.invalida(s, 'naoTexto');
+    if (['consentimento', 'aguardando_inicio'].includes(s.etapa) && comando === '2') {
+      Object.assign(s, { etapa: 'recusado', consentimento: false, dataConsentimento: null, financeira: null, emocional: null, tentativasInvalidas: 0 });
+      return saida([texto('recusa')]);
+    }
     if (s.etapa === 'consentimento') {
       if (comando === '1') {
         s.consentimento = true;
         s.dataConsentimento = s.instante;
         s.etapa = 'financeira';
+        s.tentativasInvalidas = 0;
         return saida([texto('financeira')]);
-      }
-      if (comando === '2') {
-        Object.assign(s, { etapa: 'recusado', consentimento: false, dataConsentimento: null });
-        return saida([texto('recusa')]);
       }
     } else if (s.etapa === 'aguardando_inicio' && comando === '1') {
       s.etapa = 'financeira';
+      s.tentativasInvalidas = 0;
       return saida([texto('financeira')]);
     } else if (s.etapa === 'financeira' && /^[1-4]$/.test(comando)) {
       s.financeira = Number(comando);
       s.etapa = 'emocional';
-      return { mensagens: [texto('emocional')], sensivel: true, revogado: false };
+      s.tentativasInvalidas = 0;
+      return { mensagens: [texto('apoio'), texto('emocional')], sensivel: true, revogado: false };
     } else if (s.etapa === 'emocional' && /^[1-5]$/.test(comando)) {
       s.emocional = Number(comando);
       s.etapa = 'concluido';
       s.concluidoMes = MES(s.instante);
+      s.tentativasInvalidas = 0;
       return { mensagens: [texto('encerramento')], sensivel: true, revogado: false };
     }
-    const pergunta = { consentimento: 'boasVindas', aguardando_inicio: 'mensal', financeira: 'financeira', emocional: 'emocional' }[s.etapa];
-    return saida([texto('invalida'), texto(pergunta)]);
+    return this.invalida(s);
   }
 
   /** Avança 72 horas; no vencimento, a renovação substitui o lembrete comum. */
@@ -144,7 +162,7 @@ export class CheckinSimulator {
     if (estavaValido && !this.consentimentoValido(s)) return this.abrirCiclo(s);
     if (!PENDENTES.has(s.etapa) || s.lembreteEnviado || s.instante - s.ultimaInteracao < 3 * 86400000) return [];
     s.lembreteEnviado = true;
-    return [texto('lembrete', 'radache_lembrete · após 3 dias · simulado')];
+    return [texto('lembrete', 'radache_lembrete · após 3 dias · simulado'), texto(this.pergunta(s))];
   }
 
   /** Mantém o dia/horário ao avançar o calendário e seleciona o template correto. */

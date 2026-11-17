@@ -35,7 +35,7 @@ class AlunoService:
     Atua como um adaptador provisório sobre o banco SQLite nativo.
     """
 
-    def listar(self, filtros=None):
+    def listar(self, filtros=None, incluir_inativos_ficticios=False):
         """
         Lista estudantes cadastrados aplicando filtros opcionais.
         
@@ -62,6 +62,9 @@ class AlunoService:
             classificacao_risco=filtros.get("risco", ""),
         )
         demos = mock_alunos.projetados()
+        if not incluir_inativos_ficticios and not filtros.get('status') and not filtros.get('situacao'):
+            # DELETE no catálogo fictício desativa sem destruir o histórico.
+            demos = [a for a in demos if a['status'] != 'inativo']
         for key,field in [('periodo','periodo'),('situacao','status'),('status','status'),('risco','classificacao_risco')]:
             if filtros.get(key): demos=[a for a in demos if str(a.get(field,''))==str(filtros[key])]
         if filtros.get('q'):
@@ -140,16 +143,15 @@ class AlunoService:
         # A ficha mantém os indicadores dentro de avaliacao_atual.
         # Mesclar antes de editar evita substituir notas e situações por padrões.
         avaliacao = atual.get("avaliacao_atual") or {}
-        atual.update({campo: avaliacao[campo] for campo in (
-            "nota_media", "frequencia", "indice_risco", "situacao_financeira", "situacao_psicologica"
-        ) if campo in avaliacao})
         atual.update(dados)
         self._validar(atual, obrigatorios=("nome", "matricula", "curso"))
         atual['curso'] = course_catalog.canonical(atual['curso'])
-        campos_avaliacao = {"nota_media", "frequencia", "indice_risco", "situacao_financeira", "situacao_psicologica"}
+        campos_avaliacao = {"nota_media", "frequencia", "indice_risco", "situacao_financeira", "situacao_psicologica", "resposta_financeira", "resposta_psicologica"}
         if not any(campo in dados and dados[campo] != avaliacao.get(campo) for campo in campos_avaliacao):
             for campo in campos_avaliacao:
                 atual.pop(campo, None)
+        elif not all(campo in dados for campo in ('nota_media', 'frequencia', 'resposta_financeira', 'resposta_psicologica')):
+            raise ValueError('Uma avaliação exige média, frequência e respostas financeira e psicológica.')
         database.update_aluno(aluno_id, atual)
         return True
 
@@ -220,7 +222,8 @@ class AlunoService:
                         raise ValueError()
                     dados[campo] = numero
                 except (TypeError, ValueError):
-                    raise ValueError("O campo '{}' deve estar entre 0 e {}.".format(campo, limite))
+                    rotulo = {'nota_media': 'média', 'frequencia': 'frequência', 'indice_risco': 'índice de risco'}[campo]
+                    raise ValueError("O campo '{}' deve estar entre 0 e {}.".format(rotulo, limite))
         try:
             valor = dados.get("periodo", 1)
             if isinstance(valor, bool) or not float(valor).is_integer():

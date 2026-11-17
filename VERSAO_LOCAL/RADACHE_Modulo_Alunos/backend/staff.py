@@ -8,6 +8,7 @@ import simulation_store as store
 import course_catalog
 import rbac
 import attendance
+import credential_policy
 
 
 def initialize(conn):
@@ -232,7 +233,7 @@ def handle(method,path,query,body,actor):
                 if access['perfil'] in {'gestor_curso',rbac.ATTENDANT}:access['cursoIds']=validate_courses(conn,access['campusId'],access['cursoIds'])
                 name=str(body.get('nome','')).strip();password=body.get('senhaInicial')
                 exigir(1<=len(name)<=150 and isinstance(password,str) and 8<=len(password)<=128,'Informe nome e senha inicial de 8 a 128 caracteres.',400)
-                user=dict(id=uuid4().hex,nome=name,email=login,login=login,**access,ativo=True,versaoAcesso=1,criadoEm=agora())
+                user=dict(trocaSenhaObrigatoria=not credential_policy.demo(),id=uuid4().hex,nome=name,email=login,login=login,**access,ativo=True,versaoAcesso=1,criadoEm=agora())
                 credential=gerar_hash_senha(password)
                 conn.execute('INSERT INTO gestao_usuarios VALUES (?,?,?,?,?)',(user['id'],login,json.dumps(user),credential['salt'],credential['password_hash']))
                 sync_links(conn,actor,user);audit(conn,actor,None,user)

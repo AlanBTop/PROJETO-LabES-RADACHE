@@ -69,7 +69,6 @@ CREATE TABLE IF NOT EXISTS checkins (
     consentimento_lgpd INTEGER NOT NULL DEFAULT 0 CHECK(consentimento_lgpd IN (0, 1)),
     resposta_financeira TEXT,
     resposta_psicologica TEXT,
-    resposta_academica TEXT,
     data_checkin TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     estado_conversa TEXT NOT NULL DEFAULT 'concluido',
     ultima_interacao TIMESTAMP,
@@ -85,5 +84,7 @@ CREATE TABLE IF NOT EXISTS whatsapp_eventos (
     origem TEXT NOT NULL,
     resposta TEXT,
     enviado INTEGER NOT NULL DEFAULT 0,
+    aluno_id INTEGER REFERENCES alunos(id) ON DELETE CASCADE,
+    checkin_id INTEGER REFERENCES checkins(id) ON DELETE CASCADE,
     recebido_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -87,7 +87,7 @@ class LocalSimulation(unittest.TestCase):
         self.assertEqual(detail['avaliacao_atual']['indice_risco'],57.5)
         self.assertEqual(detail['avaliacao_atual']['classificacao_risco'],'moderado')
         self.assertEqual(len(detail['historico_checkins']),1)
-        self.assertEqual(len(detail['mensagens_simuladas']),7)
+        self.assertEqual(len(detail['mensagens_simuladas']),11)
         self.assertEqual(store.student(aid),before)
         self.assertGreaterEqual(self.http('/api/dashboard')[1]['dados']['alunos_moderados'],1)
 
@@ -136,7 +136,7 @@ class LocalSimulation(unittest.TestCase):
         aid=self.create();sid=store.session(aid)['sessao_id'];ident=str(uuid4())
         first=self.answer(aid,'1',sid,ident)
         self.assertEqual(self.answer(aid,'1',sid,ident),first)
-        self.assertEqual(len(store.session(aid)['mensagens']),3)
+        self.assertEqual(len(store.session(aid)['mensagens']),6)
         self.assertEqual(self.answer(aid,'2',sid,ident)[0],400)
 
     def test_revocation_erases_sensitive_persistence(self):

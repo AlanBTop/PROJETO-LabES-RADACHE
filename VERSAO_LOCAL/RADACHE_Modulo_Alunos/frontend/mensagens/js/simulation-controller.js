@@ -79,6 +79,7 @@ export class SimulationController {
     const mensagem = {
       id: payload.id_cliente, texto: payload.conteudo_texto, timestamp: payload.timestamp,
       enviada: true, status: 'enviando', payload, tipo, alunoId: id,
+      ciclo: this.simulator.estado(id).ciclo,
     };
     this.historicos.get(id).push(mensagem);
     this.rascunhos.delete(id);
@@ -119,13 +120,18 @@ export class SimulationController {
       await new Promise(resolve => setTimeout(resolve, 300));
       const resultado = this.simulator.responder(id, mensagem.texto, mensagem.tipo);
       mensagem.sensivel = resultado.sensivel;
-      if (resultado.revogado) {
-        this.historicos.get(id).filter(m => m.sensivel).forEach(m => {
-          m.texto = 'Resposta removida após revogação.';
+      if (resultado.revogado || resultado.descartarIncompletas) {
+        this.historicos.get(id).filter(m => m.sensivel && (resultado.revogado || m.ciclo === this.simulator.estado(id).ciclo)).forEach(m => {
+          m.texto = resultado.revogado ? 'Resposta removida após revogação.' : 'Resposta incompleta descartada.';
           m.payload = null;
           m.sensivel = false;
           if (id === this.selecionado) this.view.atualizarMensagem(m);
         });
+      }
+      if (resultado.descartarEntrada || !this.simulator.estado(id).consentimento && !['1','2','SAIR','REVOGAR','CANCELAR','INICIAR'].includes(mensagem.texto.trim().toUpperCase())) {
+        mensagem.texto = 'Resposta descartada.';
+        mensagem.payload = null;
+        registro.payload = null;
       }
       this.invalidarTentativas(id);
       this.adicionarRespostas(id, resultado.mensagens);

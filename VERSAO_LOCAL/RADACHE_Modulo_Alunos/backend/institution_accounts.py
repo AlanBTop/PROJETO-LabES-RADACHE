@@ -1,4 +1,5 @@
 """Migração idempotente das equipes locais e conta institucional independente."""
+import credential_policy
 from functools import lru_cache
 import json
 import hashlib
@@ -9,7 +10,12 @@ from auth import gerar_hash_senha,ITERACOES_PBKDF2
 
 
 @lru_cache(maxsize=64)
-def credential(email):return gerar_hash_senha('admin123')
+def _demo_credential(email):
+    return credential_policy.provision(email)
+
+
+def credential(email):
+    return _demo_credential(email) if credential_policy.demo() else credential_policy.provision(email)
 
 
 def initialize(conn):
@@ -37,7 +43,7 @@ def initialize(conn):
                 cred=credential(email)
                 conn.execute('UPDATE gestao_usuarios SET salt=?,password_hash=? WHERE id=?',(cred['salt'],cred['password_hash'],uid))
         else:
-            data=dict(id=uid,nome=name,email=email,perfil=profile,campusId=campus,cursoId=course,cursoIds=[course] if course else [],
+            data=dict(trocaSenhaObrigatoria=not credential_policy.demo(),id=uid,nome=name,email=email,perfil=profile,campusId=campus,cursoId=course,cursoIds=[course] if course else [],
                       ativo=True,versaoAcesso=1,criadoEm=now)
             cred=credential(email)
             conn.execute('INSERT INTO gestao_usuarios VALUES (?,?,?,?,?)',(uid,email,json.dumps(data),cred['salt'],cred['password_hash']))

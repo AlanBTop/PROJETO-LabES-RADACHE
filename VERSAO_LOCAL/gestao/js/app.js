@@ -282,7 +282,7 @@ class Aplicacao {
       this.forms.confirmar(`${ativo ? 'Reativar' : 'Desativar'} acesso?`, ativo ? `O acesso de ${usuario.nome} será reativado. A pessoa precisará entrar novamente.` : `${usuario.nome} perderá o acesso e as sessões atuais serão encerradas. Os históricos de atendimento serão preservados.`, ativo ? 'Reativar acesso' : 'Desativar acesso', !ativo);
     } else if (acao === 'convite-usuario') {
       this.confirmacao = { tipo: 'convite', usuario };
-      this.forms.confirmar('Consultar acesso local?', `A conta ${usuario.email} usa a senha de demonstração admin123. Não há envio de e-mail nesta versão.`, 'Conferir acesso');
+      this.forms.confirmar('Consultar acesso local?', `Consulte o responsável pelo cadastro da conta ${usuario.email}. Não há envio de e-mail nesta versão.`, 'Conferir acesso');
     }
   }
 

@@ -10,6 +10,7 @@ export class AuthService {
     const response = await fetch('/api/local/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, senha }) });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.erro?.mensagem || 'Não foi possível entrar.');
+    if(payload.dados.usuario.trocaSenhaObrigatoria){location.replace('/assets/change-password.html');return;}
     if(payload.dados.usuario.perfil==='analista_institucional'){location.replace('/institucional/');return;}
     this.credencial = payload.dados.token; this.user = payload.dados.usuario; this.avisar();
   }
@@ -19,6 +20,6 @@ export class AuthService {
     const token = this.credencial; this.credencial = ''; this.user = null; this.avisar();
     if (token) await fetch('/api/local/logout', { method: 'POST', credentials:'omit', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: '{}' });
   }
-  async recuperarSenha() { throw new Error('As contas de exemplo usam admin123. Para novos acessos, utilize a senha inicial definida no cadastro. Não há envio de e-mail.'); }
+  async recuperarSenha() { throw new Error('Consulte o responsável pelo cadastro para recuperar o acesso. Não há envio de e-mail nesta versão.'); }
 }
 export function mensagemAcesso(error) { return error.message || 'Não foi possível preparar o acesso local.'; }

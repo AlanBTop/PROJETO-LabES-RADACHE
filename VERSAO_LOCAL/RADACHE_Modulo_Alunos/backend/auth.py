@@ -132,14 +132,14 @@ class SessionManager:
     Controla emissão de tokens Bearer, verificação de expiração e logout.
     """
 
-    def __init__(self, usuarios=None, ttl_seconds=8 * 60 * 60):
+    def __init__(self, usuarios=None, ttl_seconds=8 * 60 * 60, sessions=None, lock=None):
         # Usuários com credenciais hash carregadas
         self.usuarios = carregar_usuarios(usuarios or {})
         # Tempo de vida padrão: 8 horas (duração do expediente)
         self.ttl_seconds = int(ttl_seconds)
-        self._sessoes = {}
+        self._sessoes = sessions if sessions is not None else {}
         # Lock reentrante para acesso concorrente seguro
-        self._lock = threading.RLock()
+        self._lock = lock if lock is not None else threading.RLock()
 
     def autenticar(self, nome, senha):
         """
@@ -161,20 +161,21 @@ class SessionManager:
         if not hmac.compare_digest(derivado, usuario["password_hash"]):
             return None
         
-        # Emite um novo token opaco de alta entropia
-        token = secrets.token_urlsafe(32)
-        expiracao = int(time.time()) + self.ttl_seconds
-        sessao = {"username": nome, "role": usuario["role"], "expires_at": expiracao}
+        sessao = {"username": nome, "role": usuario["role"]}
         for key in ('campusId','cursoId','cursoIds'):
             if key in usuario:sessao[key]=usuario[key]
         
+        token = self.emitir(sessao)
+        return {"token": token, **self.obter_sessao(token)}
+
+    def emitir(self, dados):
+        token = secrets.token_urlsafe(32)
+        now = int(time.time())
         with self._lock:
-            now = int(time.time())
-            for expired in [key for key, value in self._sessoes.items() if value['expires_at'] <= now]:
-                self._sessoes.pop(expired, None)
-            self._sessoes[token] = sessao
-            
-        return {"token": token, **sessao}
+            for key in [k for k, v in self._sessoes.items() if v['expires_at'] <= now]:
+                self._sessoes.pop(key, None)
+            self._sessoes[token] = {**dados, 'expires_at': now + self.ttl_seconds}
+        return token
 
     def obter_sessao(self, token):
         """

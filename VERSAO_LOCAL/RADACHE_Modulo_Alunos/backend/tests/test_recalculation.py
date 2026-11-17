@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 import tempfile
 from contextlib import closing
 import unittest
@@ -55,6 +55,7 @@ class RecalculoPorCheckinTests(unittest.TestCase):
         aluno_id = database.create_aluno({
             "nome": "Outro Teste", "matricula": "T2", "curso": "Curso", "periodo": 1,
             "email": "", "telefone": "", "indice_risco": 67,
+            "nota_media": 3.2, "frequencia": 0, "resposta_financeira": "Considerando trancar por motivo financeiro", "resposta_psicologica": "5",
             "classificacao_risco": "estavel",
         })
         conn = sqlite3.connect(self.db_path)

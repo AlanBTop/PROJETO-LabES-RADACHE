@@ -86,11 +86,11 @@ class AuditTests(unittest.TestCase):
         self.assertIsNotNone(manager.obter_sessao(active['token']))
 
     def test_expired_management_session_is_removed(self):
-        with patch.object(gestao_local, 'SESSOES', {'expired': {'expira': 0}}):
+        with patch.object(gestao_local.SESSION_MANAGER, '_sessoes', {'expired': {'expires_at': 0}}):
             with self.assertRaises(gestao_local.ErroLocal) as error:
                 gestao_local.sessao('expired')
             self.assertEqual(error.exception.status, 401)
-            self.assertNotIn('expired', gestao_local.SESSOES)
+            self.assertNotIn('expired', gestao_local.SESSION_MANAGER._sessoes)
 
     def test_projection_preserves_order_history_and_latest_assessment_with_constant_queries(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(store, 'ACADEMIC', Path(tmp) / 'academic.db'), patch.object(store, 'OPERATIONAL', Path(tmp) / 'operational.db'):

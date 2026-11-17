@@ -48,7 +48,8 @@ class ManutencaoTests(unittest.TestCase):
         self.service = AlunoService()
         self.data = {"nome": "Aluno Teste", "matricula": "TEST1", "curso": "Curso",
                      "periodo": 1, "email": "aluno@example.com", "telefone": "(65) 99999-1234",
-                     "nota_media": 0, "frequencia": 0, "indice_risco": 0,
+                     "nota_media": 0, "frequencia": 0, "indice_risco": 87.5,
+                     "resposta_financeira": "considerando trancar por motivo financeiro", "resposta_psicologica": "3",
                      "situacao_financeira": "critica", "situacao_psicologica": "moderada"}
         self.addCleanup(self.temp.cleanup)
         self.addCleanup(self.db.stop)
@@ -65,26 +66,27 @@ class ManutencaoTests(unittest.TestCase):
 
     def test_edicao_preserva_avaliacao_e_zero_sem_criar_historico_inutil(self):
         aluno_id = self.service.cadastrar(self.data)
-        self.service.atualizar(aluno_id, {"nome": "Nome Alterado", "indice_risco": 0})
+        self.service.atualizar(aluno_id, {"nome": "Nome Alterado", "indice_risco": 87.5})
         aluno = self.service.obter(aluno_id)
         self.assertEqual(len(aluno["historico_avaliacoes"]), 1)
         self.assertEqual(aluno["avaliacao_atual"]["nota_media"], 0)
         self.assertEqual(aluno["avaliacao_atual"]["frequencia"], 0)
         self.assertEqual(aluno["avaliacao_atual"]["situacao_financeira"], "critica")
 
-    def test_edicao_de_risco_preserva_demais_fatores(self):
+    def test_edicao_de_risco_sem_componentes_e_rejeitada(self):
         aluno_id = self.service.cadastrar(self.data)
-        self.service.atualizar(aluno_id, {"indice_risco": 33.5})
+        with self.assertRaisesRegex(ValueError, 'avaliação exige'):
+            self.service.atualizar(aluno_id, {"indice_risco": 33.5})
         aluno = self.service.obter(aluno_id)
-        self.assertEqual(aluno["avaliacao_atual"]["indice_risco"], 33.5)
-        self.assertEqual(aluno["avaliacao_atual"]["classificacao_risco"], "moderado")
+        self.assertEqual(aluno["avaliacao_atual"]["indice_risco"], 87.5)
+        self.assertEqual(aluno["avaliacao_atual"]["classificacao_risco"], "critico")
         self.assertEqual(aluno["avaliacao_atual"]["nota_media"], 0)
         self.assertEqual(aluno["avaliacao_atual"]["situacao_psicologica"], "moderada")
-        self.assertEqual(len(aluno["historico_avaliacoes"]), 2)
+        self.assertEqual(len(aluno["historico_avaliacoes"]), 1)
 
     def test_avaliacoes_com_mesmo_timestamp_usam_a_ultima_insercao(self):
         aluno_id = self.service.cadastrar(self.data)
-        self.service.atualizar(aluno_id, {"indice_risco": 70})
+        self.service.atualizar(aluno_id, {**self.data, "nota_media": 7, "indice_risco": 70})
         with closing(database.get_connection()) as conn, conn:
             conn.execute("UPDATE avaliacoes SET data_avaliacao='2026-01-01' WHERE aluno_id=?", (aluno_id,))
         self.assertEqual(self.service.obter(aluno_id)["avaliacao_atual"]["indice_risco"], 70)
@@ -122,14 +124,14 @@ class ManutencaoTests(unittest.TestCase):
         self.assertEqual(status, 405)
 
     def test_falha_na_avaliacao_desfaz_cadastro_e_libera_escritas(self):
-        with self.assertRaises(sqlite3.IntegrityError):
+        with self.assertRaises(ValueError):
             database.create_aluno({**self.data, "nota_media": 999})
         self.assertFalse(any(row["matricula"] == "TEST1" for row in self.service.listar()))
         self.assertIsInstance(self.service.cadastrar(self.data), int)
 
     def test_falha_na_avaliacao_desfaz_edicao(self):
         aluno_id = self.service.cadastrar(self.data)
-        with self.assertRaises(sqlite3.IntegrityError):
+        with self.assertRaises(ValueError):
             database.update_aluno(aluno_id, {**self.data, "nome": "Não salvar", "nota_media": 999})
         self.assertEqual(self.service.obter(aluno_id)["nome"], "Aluno Teste")
 

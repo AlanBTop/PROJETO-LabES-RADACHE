@@ -14,6 +14,7 @@ from urllib.parse import urlparse, parse_qs, unquote
 from uuid import uuid4
 
 import database
+import credential_policy
 import rbac
 import institution_accounts
 import course_catalog
@@ -22,10 +23,12 @@ import simulation_followup
 import attendance
 import staff
 from aluno_service import AlunoService
-from auth import gerar_hash_senha, ITERACOES_PBKDF2
+from auth import gerar_hash_senha, ITERACOES_PBKDF2, SessionManager
 
 LOCK = threading.RLock()
-SESSOES = {}
+SESSION_MANAGER = SessionManager()
+SESSOES = SESSION_MANAGER._sessoes
+legacy_session = lambda token: None
 TRANSICOES = attendance.TRANSITIONS
 CATEGORIAS = {'academico', 'financeiro', 'ti', 'outro'}
 EQUIPE = rbac.OPERATIONAL | {rbac.ATTENDANT}
@@ -57,13 +60,14 @@ def iniciar():
         if conn.execute("SELECT 1 FROM gestao_meta WHERE chave='inicializado'").fetchone():
             institution_accounts.initialize(conn)
             staff.initialize(conn)
+            credential_policy.protect_existing(conn)
             return
-        cred = gerar_hash_senha('admin123')
         for uid, nome, perfil in [('admin', 'Administração local', 'admin_geral'),
                                   ('coord', 'Coordenação local', 'coordenador_curso'),
                                   ('equipe', 'Equipe local', 'funcionario_curso'),
                                   ('caest', 'CAEst local', 'caest'), ('prae', 'PRAE local', 'prae')]:
-            dados = {'id': uid, 'nome': nome, 'email': uid + '@radache.local', 'perfil': perfil,
+            cred = credential_policy.provision(uid + '@radache.local')
+            dados = {'trocaSenhaObrigatoria': not credential_policy.demo(), 'id': uid, 'nome': nome, 'email': uid + '@radache.local', 'perfil': perfil,
                      'cursoId': 'ciencia-da-computacao' if perfil in {'coordenador_curso', 'funcionario_curso'} else '',
                      'ativo': True, 'versaoAcesso': 1, 'criadoEm': agora()}
             conn.execute('INSERT INTO gestao_usuarios VALUES (?,?,?,?,?)',
@@ -87,6 +91,7 @@ def iniciar():
         conn.execute("INSERT INTO gestao_meta VALUES ('inicializado')")
         institution_accounts.initialize(conn)
         staff.initialize(conn)
+        credential_policy.protect_existing(conn)
 
 
 def evento(conn, chamado, dados):
@@ -120,17 +125,15 @@ def legacy_user(legacy):
 
 def sessao(token):
     with LOCK:
-        dados = SESSOES.get(token)
-        if dados and dados['expira'] <= time.time():
-            SESSOES.pop(token, None)
-            raise ErroLocal(401, 'Entre novamente para continuar.')
-        if not dados:
-            import app
-            legacy=app.auth.obter_sessao(token)
+        dados = SESSION_MANAGER.obter_sessao(token)
+        if not dados or 'uid' not in dados:
+            legacy = dados if dados and 'username' in dados else legacy_session(token)
             if legacy:
-                user=legacy_user(legacy)
-                if user and user['ativo']:return {**user,'uid':user['id']}
-        exigir(dados and dados['expira'] > time.time(), 'Entre novamente para continuar.', 401)
+                user = legacy_user(legacy)
+                if user and user['ativo']:
+                    return {**user, 'uid': user['id']}
+            dados = None
+        exigir(dados, 'Entre novamente para continuar.', 401)
         with closing(database.get_connection()) as conn:
             row = conn.execute('SELECT * FROM gestao_usuarios WHERE id=?', (dados['uid'],)).fetchone()
         exigir(row, 'Sessão encerrada.', 401)
@@ -209,20 +212,35 @@ def tratar(method, caminho, query, body, token):
         derivado = hashlib.pbkdf2_hmac('sha256', str(body.get('senha', '')).encode(), bytes.fromhex(row['salt']), ITERACOES_PBKDF2).hex()
         usuario = usuario_publico(row)
         exigir(hmac.compare_digest(derivado, row['password_hash']) and usuario['ativo'], 'E-mail ou senha inválidos.', 401)
-        token = secrets.token_urlsafe(32)
-        with LOCK:
-            now = time.time()
-            for expired in [key for key, value in SESSOES.items() if value['expira'] <= now]:
-                SESSOES.pop(expired, None)
-            SESSOES[token] = {'uid': usuario['id'], 'versao': usuario['versaoAcesso'], 'expira': time.time() + 28800}
+        token = SESSION_MANAGER.emitir({'uid': usuario['id'], 'versao': usuario['versaoAcesso']})
         return {'token': token, 'usuario': {**usuario, 'uid': usuario['id']}}
     usuario = sessao(token)
     if caminho == 'logout' and method == 'POST':
         with LOCK:
             SESSOES.pop(token, None)
         return {}
+    if caminho == 'senha' and method == 'POST':
+        senha = body.get('novaSenha')
+        exigir(isinstance(senha, str) and 12 <= len(senha) <= 128, 'Use uma senha de 12 a 128 caracteres.', 400)
+        with LOCK, closing(database.get_connection()) as conn, conn:
+            row = conn.execute('SELECT * FROM gestao_usuarios WHERE id=?', (usuario['id'],)).fetchone()
+            derivado = hashlib.pbkdf2_hmac('sha256', str(body.get('senhaAtual', '')).encode(), bytes.fromhex(row['salt']), ITERACOES_PBKDF2).hex()
+            exigir(hmac.compare_digest(derivado, row['password_hash']), 'Senha atual inválida.', 401)
+            exigir(senha != body.get('senhaAtual') and senha != 'admin123', 'Escolha uma nova senha.', 400)
+            cred = gerar_hash_senha(senha)
+            usuario.pop('uid', None)
+            usuario.update(trocaSenhaObrigatoria=False, versaoAcesso=usuario['versaoAcesso'] + 1)
+            conn.execute('UPDATE gestao_usuarios SET dados=?,salt=?,password_hash=? WHERE id=?',
+                         (json.dumps(usuario), cred['salt'], cred['password_hash'], usuario['id']))
+        with SESSION_MANAGER._lock:
+            for key, value in list(SESSOES.items()):
+                legacy = legacy_user(value) if 'username' in value else None
+                if value.get('uid') == usuario['id'] or (legacy and legacy['id'] == usuario['id']):
+                    SESSION_MANAGER.encerrar(key)
+        return {'mensagem': 'Senha alterada. Entre novamente.'}
     if caminho == 'sessao' and method == 'GET':
         return usuario
+    exigir(not usuario.get('trocaSenhaObrigatoria'), 'Altere sua senha inicial para continuar.', 403)
     if caminho == 'sessao/acesso' and method == 'POST':
         with LOCK, closing(database.get_connection()) as conn, conn:
             usuario = sessao(token)
@@ -288,7 +306,9 @@ def tratar(method, caminho, query, body, token):
                 itens = [json.loads(row[0]) for row in conn.execute('SELECT dados FROM gestao_chamados ORDER BY id')]
                 itens.extend(simulation_followup.tickets())
             itens.sort(key=lambda i: i['ultimaAtividadeEm'], reverse=True)
-            allowed={str(a['id']):a for a in SERVICO.listar() if rbac.student_allowed(usuario,a)}
+            # A consulta explícita do chamado preserva histórico após desativação.
+            # Listagens padrão continuam ocultando o cadastro fictício inativo.
+            allowed={str(a['id']):a for a in SERVICO.listar(incluir_inativos_ficticios=bool(ident)) if rbac.student_allowed(usuario,a)}
             itens = [i for i in itens if attendance.visible(usuario,i,allowed) and (not campus_filtro or rbac.campus_id(allowed[i['alunoId']].get('campus'))==campus_filtro) and (not curso_filtro or i['cursoId'] == curso_filtro)]
             if recurso == 'indicadores' and method == 'GET':
                 with closing(database.get_connection()) as users_conn:
@@ -387,11 +407,11 @@ def responder(handler):
     prefixo = '/api/local/' if parsed.path.startswith('/api/local/') else '/api/v1/'
     caminho = unquote(parsed.path[len(prefixo):]).strip('/')
     try:
-        body = handler._body() if handler.command in {'POST', 'PATCH'} else {}
+        body = (handler._login_body() if caminho == 'login' else handler._body()) if handler.command in {'POST', 'PATCH'} else {}
         query = {k: v[0] for k, v in parse_qs(parsed.query).items()}
         resultado = tratar(handler.command, caminho, query, body, handler._token())
         if caminho=='login':handler._set_session_cookie(resultado['token'])
-        if caminho=='logout':handler._set_session_cookie()
+        if caminho in {'logout', 'senha'}:handler._set_session_cookie()
         handler._json(200, {'sucesso': True, 'dados': resultado})
     except ErroLocal as erro:
         handler._json(erro.status, {'sucesso': False, 'erro': {'mensagem': erro.mensagem}})

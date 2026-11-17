@@ -44,6 +44,8 @@ import gestao_local
 import mock_alunos
 import simulation_store
 import simulation_api
+import security
+import credential_policy
 import analytics
 import course_catalog
 from aluno_service import AlunoService
@@ -59,7 +61,8 @@ PORT = 8080
 
 # Injeção de dependências: Fachada de alunos e Gerenciador de Sessões
 alunos = AlunoService()
-auth = SessionManager(carregar_usuarios())
+auth = SessionManager(carregar_usuarios(), sessions=gestao_local.SESSOES, lock=gestao_local.SESSION_MANAGER._lock)
+gestao_local.legacy_session = lambda token: auth.obter_sessao(token)
 
 
 class RadacheRequestHandler(BaseHTTPRequestHandler):
@@ -71,11 +74,13 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
         super().setup()
         # Evita manter uma thread bloqueada indefinidamente por um corpo incompleto.
         self.connection.settimeout(15)
+        self._login_ticket = None
 
     def end_headers(self):
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Referrer-Policy', 'same-origin')
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'")
         super().end_headers()
 
     def _internal_error(self, error):
@@ -85,14 +90,14 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
 
     def _json(self, status, payload):
         """Helper para envio padronizado de respostas JSON com headers de CORS e UTF-8."""
+        if status == 200 and getattr(self, '_login_ticket', None):
+            security.LOGIN_LIMITER.release(self._login_ticket)
+        self._login_ticket = None
         body = json.dumps(payload, ensure_ascii=False, default=str).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         if getattr(self,'_cookie',None) is not None:
             self.send_header('Set-Cookie',self._cookie);self._cookie=None
         try:
@@ -158,7 +163,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
     def _session(self,token):
         if not token:return None
         old=auth.obter_sessao(token)
-        if old:
+        if old and 'username' in old:
             stored=gestao_local.legacy_user(old)
             if stored:
                 if not stored['ativo']:return None
@@ -181,10 +186,42 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
         previous=cookies.get('radache_session')
         if previous and previous.value!=token:
             auth.encerrar(previous.value);gestao_local.SESSOES.pop(previous.value,None)
-        self._cookie='radache_session='+token+'; Path=/; HttpOnly; SameSite=Strict; Max-Age='+('28800' if token else '0')
+        self._cookie='radache_session='+token+'; Path=/; HttpOnly; SameSite=Strict; Max-Age='+('28800' if token else '0') + ('; Secure' if self._https() else '')
+
+    def _https(self):
+        import ssl
+        # Proxy headers não são aceitos de clientes; opção para proxy HTTPS confiável.
+        return isinstance(self.connection, ssl.SSLSocket) or os.environ.get('RADACHE_HTTPS') == '1'
+
+    def _login_body(self):
+        body = self._body()
+        self._login_ticket = security.LOGIN_LIMITER.reserve(self.client_address[0], body.get('usuario', body.get('login', body.get('email'))))
+        if self._login_ticket is None:
+            raise gestao_local.ErroLocal(429, 'Limite de tentativas atingido. Aguarde 15 minutos.')
+        return body
 
     def _guard_data(self):
         path=urllib.parse.urlsplit(self.path).path
+        protected = path.startswith(('/api/', '/simulation-api/', '/mock-api/'))
+        if protected:
+            host = self.headers.get('Host', '')
+            try:
+                hostname = urllib.parse.urlsplit('//' + host).hostname
+            except ValueError:
+                hostname = None
+            allowed = security.loopback(hostname) or hostname == os.environ.get('RADACHE_HOST', '127.0.0.1')
+            if not allowed or (credential_policy.demo() and not security.loopback(self.client_address[0])):
+                self._descartar_corpo(); self._json(403, {'sucesso': False, 'erro': 'Origem não permitida.'}); return False
+            if self.command in {'POST', 'PUT', 'PATCH', 'DELETE'}:
+                origin = self.headers.get('Origin')
+                referer = self.headers.get('Referer')
+                cross = self.headers.get('Sec-Fetch-Site') == 'cross-site'
+                invalid = origin is not None and not security.same_origin(origin, host, self._https())
+                cookie_only = self.headers.get('Cookie') and not self.headers.get('Authorization')
+                if cookie_only and origin is None:
+                    invalid = not referer or not security.same_origin(referer, host, self._https())
+                if cross or invalid:
+                    self._descartar_corpo(); self._json(403, {'sucesso': False, 'erro': 'Origem da operação não permitida.'}); return False
         if path in ('/api/login','/api/local/login','/api/v1/login'):return True
         if path.startswith(('/api/','/simulation-api/')):
             if not self._proteger_api():return False
@@ -214,6 +251,9 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
         """Valida o token de sessão antes de acessar qualquer endpoint privado."""
         sessao = self._session(self._token())
         if sessao:
+            path = urllib.parse.urlsplit(self.path).path
+            if sessao.get('trocaSenhaObrigatoria') and path not in ('/api/local/senha', '/api/v1/senha', '/api/local/sessao', '/api/v1/sessao', '/api/session', '/api/local/logout', '/api/v1/logout', '/api/logout'):
+                self._descartar_corpo(); self._json(403, {'sucesso': False, 'erro': 'Altere sua senha inicial para continuar.'}); return False
             self.sessao = sessao
             path=urllib.parse.urlsplit(self.path).path
             if sessao['perfil']==rbac.ATTENDANT and not (path.startswith(('/api/local/','/api/v1/')) or path in ('/api/session','/api/logout')):
@@ -269,7 +309,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
             if path.startswith("/api/mock-alunos"):
                 return mock_alunos.responder(self)
             if path == "/healthz":
-                return self._json(200, {"servico": "radache-local", "versao": 3, "moduloAlunos": "sqlite-simulacao", "pasta": str(CURRENT_DIR.parent.parent)})
+                return self._json(200, {"servico": "radache-local", "versao": 3, "moduloAlunos": "sqlite-simulacao", "demonstracao": credential_policy.demo(), "pasta": str(CURRENT_DIR.parent.parent)})
             if path.startswith(("/api/v1/", "/api/local/")):
                 return gestao_local.responder(self)
             if path in ("/", "/index.html"):
@@ -406,24 +446,26 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
                 return self._internal_error(exc)
         if path == "/api/login":
             try:
-                dados = self._body()
+                dados = self._login_body()
                 sessao = auth.autenticar(dados.get("usuario"), dados.get("senha"))
                 if sessao:
                     context=self._session(sessao['token'])
-                    if context:sessao.update(role=context['perfil'])
+                    if context:sessao.update(role=context['perfil'], trocaSenhaObrigatoria=context.get('trocaSenhaObrigatoria', False))
                     else:sessao=None
                 if not sessao:
                     name=str(dados.get('usuario',''))
                     try:
                         result=gestao_local.tratar('POST','login',{},dict(email=name if '@' in name else name+'@radache.local',senha=dados.get('senha')),'')
-                        s=self._session(result['token']);sessao=dict(token=result['token'],username=s['username'],role=s['perfil'],expires_at=int(__import__('time').time())+28800)
+                        s=self._session(result['token']);sessao=dict(token=result['token'],username=s['username'],role=s['perfil'],trocaSenhaObrigatoria=s.get('trocaSenhaObrigatoria', False),expires_at=int(__import__('time').time())+28800)
                     except Exception:pass
                 if not sessao:
                     return self._json(401 if auth.usuarios else 503, {"sucesso": False, "erro": "Usuário ou senha inválidos."})
                 self._set_session_cookie(sessao['token'])
                 return self._json(200, {"sucesso": True, "token": sessao["token"], "usuario": {
-                    "username": sessao["username"], "role": sessao["role"], "expires_at": sessao["expires_at"]
+                    "username": sessao["username"], "role": sessao["role"], "expires_at": sessao["expires_at"], "trocaSenhaObrigatoria": sessao.get("trocaSenhaObrigatoria", False)
                 }})
+            except gestao_local.ErroLocal as exc:
+                return self._json(exc.status, {"sucesso": False, "erro": exc.mensagem})
             except (ValueError, json.JSONDecodeError, UnicodeDecodeError) as exc:
                 return self._json(400, {"sucesso": False, "erro": str(exc) or "JSON inválido."})
         if path == "/api/logout":
@@ -459,19 +501,7 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
                 except Exception as exc:
                     falhas.append({"aluno_id": aluno_id, "erro": str(exc)})
             return self._json(200 if not falhas else 502, {"sucesso": not falhas, "enviados": enviados, "falhas": falhas})
-        if path == "/api/alunos" and not self._exigir_coordenacao():
-            return
-        if path != "/api/alunos":
-            return self._json(404, {"sucesso": False, "erro": "Endpoint não encontrado."})
-        try:
-            aluno_id = alunos.cadastrar(self._body())
-            return self._json(201, {"sucesso": True, "mensagem": "Aluno cadastrado com sucesso.", "aluno_id": aluno_id})
-        except ValueError as exc:
-            return self._json(409 if "matrícula" in str(exc).lower() else 400, {"sucesso": False, "erro": str(exc)})
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            return self._json(400, {"sucesso": False, "erro": "JSON inválido."})
-        except Exception as exc:
-            return self._json(400, {"sucesso": False, "erro": str(exc)})
+        return self._json(404, {"sucesso": False, "erro": "Endpoint não encontrado."})
 
     def _bloquear_escrita_academica(self):
         if not self._proteger_api(): return
@@ -562,15 +592,23 @@ class RadacheRequestHandler(BaseHTTPRequestHandler):
                 self.close_connection = True
 
     def log_message(self, fmt, *args):
-        if any(code in str(args) for code in (" 400 ", " 409 ", " 500 ")):
-            super().log_message(fmt, *args)
+        # Nunca registrar URL, query, corpo, credenciais, IP ou texto arbitrário.
+        if fmt == '"%s" %s %s' and len(args) == 3 and str(args[1]) in {'400','401','403','409','500','503'}:
+            sys.stderr.write('RADACHE HTTP ' + str(args[1]) + '\n')
 
 
 def run_server(port=PORT, open_browser=False, start_page="/", start_pages=None):
+    if credential_policy.demo() and not security.loopback(os.environ.get('RADACHE_HOST', '127.0.0.1')):
+        raise ValueError('Demonstração permitida somente em loopback. Use credenciais próprias para outro endereço.')
     simulation_store.init()
     database.init_db()
     gestao_local.iniciar()
-    # A versão local usa somente o simulador; não agenda envios reais.
+    # Envio externo exige um comando explícito, além da configuração completa.
+    if os.environ.get('RADACHE_WHATSAPP_LEMBRETES') == '1':
+        whatsapp._configuracao()
+        if not all(os.environ.get(k) for k in ('WHATSAPP_TEMPLATE_CONSENTIMENTO', 'WHATSAPP_TEMPLATE_LEMBRETE')):
+            raise ValueError('Configure os dois modelos aprovados para ativar lembretes.')
+        whatsapp.iniciar_agendador_lembretes()
     server = ThreadingHTTPServer((os.environ.get("RADACHE_HOST", "127.0.0.1"), port), RadacheRequestHandler)
     print("RADACHE disponível em http://localhost:{}".format(port))
     if open_browser:

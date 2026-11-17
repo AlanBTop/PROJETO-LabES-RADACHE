@@ -87,7 +87,7 @@ O banco de dados provisório foi modelado no dialeto **SQLite 3** (totalmente po
 | `situacao_financeira`| VARCHAR(20)| NÃO | - | Classificação do impacto financeiro: `'estavel'`, `'moderada'`, `'critica'`. |
 | `situacao_psicologica`|VARCHAR(20)| NÃO | - | Grau de vulnerabilidade emocional: `'estavel'`, `'moderada'`, `'critica'`. |
 | `indice_risco` | REAL | NÃO | - | Chance calculada de evasão em percentual (0.0% a 100.0%). |
-| `classificacao_risco`| VARCHAR(20)| NÃO | Index | Categoria do risco: `'estavel'` (<35%), `'moderado'` (35-69%), `'critico'` (≥70%). |
+| `classificacao_risco`| VARCHAR(20)| NÃO | Index | Categoria derivada de `risk.py`; [faixas e cenários gerados do código](../MODELO_RISCO.md). |
 | `data_avaliacao` | TIMESTAMP | NÃO | - | Timestamp de quando a predição foi calculada. |
 
 #### Tabela 3: `checkins` (Respostas Conversacionais do WhatsApp)

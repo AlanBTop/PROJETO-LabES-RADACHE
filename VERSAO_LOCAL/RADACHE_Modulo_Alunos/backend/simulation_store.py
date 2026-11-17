@@ -3,6 +3,7 @@ from contextlib import closing
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 import calendar
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -171,8 +172,25 @@ def valid(s):
 def open_cycle(s):
     ok = valid(s)
     s.update(etapa='aguardando_inicio' if ok else 'consentimento', consentimento=ok,
-             financeira=None, emocional=None, concluidoMes=None, ultimaInteracao=s['timestamp'], lembreteEnviado=False)
-    return ['mensal' if ok else 'boasVindas']
+             financeira=None, emocional=None, concluidoMes=None, ultimaInteracao=s['timestamp'], lembreteEnviado=False,
+             tentativasInvalidas=0)
+    return ['mensal'] if ok else ['boasVindas', 'privacidade', 'sair', 'consentimento']
+
+
+def question_key(stage):
+    return {'consentimento':'consentimento', 'aguardando_inicio':'mensal', 'financeira':'financeira', 'emocional':'emocional'}[stage]
+
+
+def invalid_answer(c, sid, aid, s, guidance='invalida'):
+    """Duas falhas por pergunta encerram apenas o ciclo atual e removem sua resposta parcial."""
+    s['tentativasInvalidas'] = s.get('tentativasInvalidas', 0) + 1
+    if s['tentativasInvalidas'] < 2:
+        return [guidance, question_key(s['etapa'])]
+    c.execute("UPDATE mensagens SET conteudo='Resposta incompleta descartada.',sensivel=0 WHERE sessao_id=? AND remetente='aluno' AND (sensivel=1 OR pergunta IN ('financeira','emocional'))", (sid,))
+    # Os caches de retry incluem o histórico; não podem reter a resposta parcial.
+    c.execute('DELETE FROM comandos WHERE aluno_id=?', (aid,))
+    s.update(etapa='encerrado', financeira=None, emocional=None, concluidoMes=None)
+    return ['encerradoInvalido']
 
 
 def snapshot(s):
@@ -208,13 +226,17 @@ def session(aid, body=None):
     ident = body.get('id_cliente')
     if action != 'carregar' and (not isinstance(ident,str) or not 1 <= len(ident) <= 100):
         raise ValueError('Identificador da operação obrigatório.')
-    signature = json.dumps(body,sort_keys=True,ensure_ascii=False)
+    # Deduplicação não precisa guardar o texto original da resposta.
+    signature = hashlib.sha256(json.dumps(body,sort_keys=True,ensure_ascii=False).encode('utf-8')).hexdigest()
     with closing(connect(OPERATIONAL)) as c, c:
         c.execute('BEGIN IMMEDIATE')
         if ident:
             old = c.execute('SELECT * FROM comandos WHERE id=?',(ident,)).fetchone()
             if old:
-                if old['aluno_id'] != aid or old['assinatura'] != signature:
+                previous_signature = old['assinatura']
+                if previous_signature.startswith('{'):  # Compatibilidade com retries anteriores à correção.
+                    previous_signature = hashlib.sha256(previous_signature.encode('utf-8')).hexdigest()
+                if old['aluno_id'] != aid or previous_signature != signature:
                     raise ValueError('Identificador de operação reutilizado com outro conteúdo.')
                 return json.loads(old['resultado'])
         row = c.execute('SELECT * FROM sessoes WHERE aluno_id=? ORDER BY rowid DESC LIMIT 1',(aid,)).fetchone()
@@ -241,51 +263,57 @@ def session(aid, body=None):
                 output = open_cycle(s)
             elif s['etapa'] in ('consentimento','aguardando_inicio','financeira','emocional') and not s['lembreteEnviado']:
                 s['lembreteEnviado'] = True
-                output = ['lembrete']
+                output = ['lembrete', question_key(s['etapa'])]
         elif action == 'responder':
             content = body.get('texto')
             if not isinstance(content,str) or not content.strip() or len(content)>4000:
                 raise ValueError('A resposta deve ter entre 1 e 4000 caracteres.')
             command = content.strip().upper()
             stage = s['etapa']
+            consent_active = valid(s)
             sensitive = False
             s['ultimaInteracao'] = s['timestamp']
-            if body.get('tipo','texto') != 'texto':
-                output = ['naoTexto']
-            elif command == 'REVOGAR':
+            is_text = body.get('tipo','texto') == 'texto'
+            if is_text and command in ('SAIR', 'REVOGAR', 'CANCELAR'):
                 # O roteiro promete apagar respostas: remove também estado, avaliações e cache de retries.
-                c.execute("UPDATE mensagens SET conteudo='Resposta removida após revogação.',sensivel=0 WHERE aluno_id=? AND sensivel=1",(aid,))
+                c.execute("UPDATE mensagens SET conteudo='Resposta removida após revogação.',sensivel=0 WHERE aluno_id=? AND (sensivel=1 OR (remetente='aluno' AND pergunta IN ('financeira','emocional')))", (aid,))
                 c.execute('DELETE FROM avaliacoes_sim WHERE aluno_id=?',(aid,))
                 c.execute('DELETE FROM comandos WHERE aluno_id=?',(aid,))
                 for previous in c.execute('SELECT id,estado FROM sessoes WHERE aluno_id=?',(aid,)).fetchall():
                     cleaned = json.loads(previous['estado'])
                     cleaned.update(financeira=None,emocional=None,consentimento=False,dataConsentimento=None,etapa='revogado',concluidoMes=None)
                     c.execute('UPDATE sessoes SET estado=? WHERE id=?',(json.dumps(cleaned),previous['id']))
-                s.update(etapa='revogado',consentimento=False,dataConsentimento=None,financeira=None,emocional=None,concluidoMes=None)
-                output = ['revogacao']
+                refused = not consent_active and stage in ('consentimento','recusado')
+                s.update(etapa='recusado' if refused else 'revogado',consentimento=False,dataConsentimento=None,financeira=None,emocional=None,concluidoMes=None,tentativasInvalidas=0)
+                output = ['recusa' if refused else 'revogacao']
             elif not valid(s) and stage in ('aguardando_inicio','financeira','emocional','concluido'):
                 output = open_cycle(s)
             elif s.get('concluidoMes') == s['timestamp'][:7]:
                 output = ['respondido']
-            elif stage == 'concluido' or command == 'INICIAR' and stage not in ('financeira','emocional'):
+            elif stage == 'concluido' or is_text and command == 'INICIAR' and stage not in ('financeira','emocional'):
                 output = open_cycle(s)
-            elif command == 'INICIAR':
+            elif is_text and command == 'INICIAR':
                 output = [stage]
-            elif stage in ('recusado','revogado'):
-                output = ['recusa' if stage=='recusado' else 'revogacao']
-            elif stage == 'consentimento' and command in ('1','2'):
+            elif stage in ('recusado','revogado','encerrado'):
+                output = [{'recusado':'recusa','revogado':'revogacao','encerrado':'encerradoInvalido'}[stage]]
+            elif not is_text:
+                output = invalid_answer(c,sid,aid,s,'naoTexto')
+            elif stage in ('consentimento','aguardando_inicio') and command == '2':
+                s.update(etapa='recusado',consentimento=False,dataConsentimento=None,financeira=None,emocional=None,tentativasInvalidas=0)
+                output = ['recusa']
+            elif stage == 'consentimento' and command == '1':
                 ok = command=='1'
-                s.update(etapa='financeira' if ok else 'recusado',consentimento=ok,dataConsentimento=s['timestamp'] if ok else None)
+                s.update(etapa='financeira' if ok else 'recusado',consentimento=ok,dataConsentimento=s['timestamp'] if ok else None,tentativasInvalidas=0)
                 output = ['financeira' if ok else 'recusa']
             elif stage == 'aguardando_inicio' and command=='1':
-                s['etapa']='financeira'
+                s.update(etapa='financeira',tentativasInvalidas=0)
                 output=['financeira']
             elif stage == 'financeira' and command in ('1','2','3','4'):
-                s.update(financeira=int(command),etapa='emocional')
+                s.update(financeira=int(command),etapa='emocional',tentativasInvalidas=0)
                 sensitive=True
-                output=['emocional']
+                output=['apoio','emocional']
             elif stage == 'emocional' and command in ('1','2','3','4','5'):
-                s.update(emocional=int(command),etapa='concluido',concluidoMes=s['timestamp'][:7])
+                s.update(emocional=int(command),etapa='concluido',concluidoMes=s['timestamp'][:7],tentativasInvalidas=0)
                 sensitive=True
                 output=['encerramento']
                 evaluation = dict(data_avaliacao=s['timestamp'],nota_media=academic['nota_media'],frequencia=academic['frequencia'],
@@ -302,7 +330,14 @@ def session(aid, body=None):
                 evaluation['metadados_risco']=risk_history.snapshot(evaluation,previous,'whatsapp_simulado',sid)
                 c.execute('INSERT INTO avaliacoes_sim VALUES (?,?,?)',(sid,aid,json.dumps(evaluation)))
             else:
-                output=['invalida',{'consentimento':'boasVindas','aguardando_inicio':'mensal'}.get(stage,stage)]
+                output=invalid_answer(c,sid,aid,s)
+            # Fora do consentimento, somente comandos de controle são persistidos.
+            control = is_text and command in ('INICIAR','REVOGAR','SAIR','CANCELAR')
+            choice = is_text and stage in ('consentimento','aguardando_inicio') and command in ('1','2')
+            if not consent_active and not choice and not control:
+                content = 'Resposta descartada sem consentimento ativo.'
+            elif not sensitive and not choice and not control:
+                content = 'Resposta inválida descartada.'
             message(c,sid,aid,'aluno',content,s['timestamp'],stage,sensitive)
         for key in output:
             message(c,sid,aid,'sistema',TEXTS[key],s['timestamp'],s['etapa'])

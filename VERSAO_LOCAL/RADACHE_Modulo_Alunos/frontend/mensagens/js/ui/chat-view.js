@@ -282,7 +282,7 @@ export class ChatView {
 
   /** Apresenta o estado do roteiro sem decidir transições ou calcular componentes. */
   atualizarSimulacao(contato, estado, ocupado = false) {
-    const etapas = { consentimento: 'Aguardando consentimento', aguardando_inicio: 'Aguardando início', financeira: 'Pergunta 1 de 2', emocional: 'Pergunta 2 de 2', concluido: 'Check-in concluído', recusado: 'Participação recusada', revogado: 'Consentimento revogado' };
+    const etapas = { consentimento: 'Aguardando consentimento', aguardando_inicio: 'Aguardando início', financeira: 'Pergunta 1 de 2', emocional: 'Pergunta 2 de 2', concluido: 'Check-in concluído', recusado: 'Participação recusada', revogado: 'Consentimento revogado', encerrado: 'Check-in encerrado após duas tentativas inválidas' };
     document.querySelector('#simulation-student').textContent = `${contato.nome} · ${contato.curso}`;
     document.querySelector('#simulation-stage').textContent = etapas[estado.etapa];
     document.querySelector('#simulation-stage').dataset.stage = estado.etapa;
@@ -294,14 +294,16 @@ export class ChatView {
       `Autorizado em: ${formatarData(estado.dataConsentimento)} · ${estado.consentimentoExpirado ? 'Vencido em' : 'Válido até'}: ${formatarData(estado.validadeConsentimento)}` :
       'Data do consentimento: não concedido · Validade: 12 meses a partir do aceite.';
     const respostas = {
-      consentimento: [['1', '1 · Sim, aceito'], ['2', '2 · Não, obrigado(a)']],
-      aguardando_inicio: [['1', '1 · Começar as perguntas']],
-      financeira: [['1', '1 · Sem dificuldade'], ['2', '2 · Leve'], ['3', '3 · Significativa'], ['4', '4 · Trancar o curso']],
+      consentimento: [['1', '1 · Aceito'], ['2', '2 · Recuso']],
+      aguardando_inicio: [['1', '1 · Começar'], ['2', '2 · Recuso']],
+      financeira: [['1', '1 · Sem dificuldade'], ['2', '2 · Dificuldade leve'], ['3', '3 · Dificuldade significativa'], ['4', '4 · Penso em trancar por motivo financeiro']],
       emocional: [['1', '1 · Muito ruim'], ['2', '2 · Ruim'], ['3', '3 · Regular'], ['4', '4 · Bom'], ['5', '5 · Muito bom']],
-      concluido: [['REVOGAR', 'REVOGAR consentimento']],
+      concluido: [['SAIR', 'SAIR e apagar respostas']],
       recusado: [['INICIAR', 'INICIAR novamente']],
       revogado: [['INICIAR', 'INICIAR novamente']],
+      encerrado: [['INICIAR', 'INICIAR novamente']],
     };
+    if (!['concluido', 'recusado', 'revogado'].includes(estado.etapa)) respostas[estado.etapa]?.push(['SAIR', 'SAIR da participação']);
     const botoes = (respostas[estado.etapa] || []).map(([valor, label]) => {
       const button = elemento('button', 'quick-reply', label);
       button.type = 'button';

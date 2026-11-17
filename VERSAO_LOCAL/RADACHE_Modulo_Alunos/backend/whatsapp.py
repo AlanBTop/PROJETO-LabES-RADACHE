@@ -41,6 +41,7 @@ import urllib.error
 import urllib.request
 
 import database
+import privacy
 
 # Mapeamento semântico das opções de resposta financeira
 FINANCEIRO = {
@@ -159,20 +160,12 @@ def _telefone_internacional(valor):
 
 def _encontrar_aluno_por_telefone(origem):
     """Associa apenas um telefone cadastrado; números ambíguos não são processados."""
-    telefone = _digitos(origem)
-    if len(telefone) < 10:
+    telefone = _telefone_internacional(origem)
+    if len(telefone) not in (12, 13):
         return None
-    conn = database.get_connection()
-    rows = conn.execute(
-        "SELECT id, telefone FROM alunos WHERE status='ativo' AND status_exclusao=0"
-    ).fetchall()
-    conn.close()
-    correspondencias = []
-    for row in rows:
-        cadastrado = _digitos(row["telefone"])
-        if telefone == cadastrado or _telefone_internacional(telefone) == _telefone_internacional(cadastrado):
-            correspondencias.append(row["id"])
-    return correspondencias[0] if len(correspondencias) == 1 else None
+    with closing(database.get_connection()) as conn:
+        rows = conn.execute("SELECT id FROM alunos WHERE telefone_normalizado=? AND status='ativo' AND status_exclusao=0 LIMIT 2", (telefone,)).fetchall()
+    return rows[0]['id'] if len(rows) == 1 else None
 
 
 def iniciar_checkin(aluno_id):
@@ -249,8 +242,9 @@ def _preparar_resposta(conn, aluno_id, texto):
         checkin = conn.execute("SELECT id FROM checkins WHERE aluno_id=? AND consentimento_lgpd=1 ORDER BY id DESC LIMIT 1", (aluno_id,)).fetchone()
         if checkin and (not ultimo or ultimo["estado_conversa"] != "revogado"):
             conn.execute("""UPDATE checkins SET consentimento_lgpd=0,resposta_financeira=NULL,
-                resposta_psicologica=NULL,resposta_academica=NULL,estado_conversa='revogado',
+                resposta_psicologica=NULL,estado_conversa='revogado',
                 ultima_interacao=CURRENT_TIMESTAMP,lembrete_enviado=0 WHERE id=?""", (checkin["id"],))
+            privacy.revoke(conn, checkin['id'], aluno_id)
             return MENSAGEM_REVOGACAO
         return None
     if not pendencia:
@@ -281,6 +275,14 @@ def _preparar_resposta(conn, aluno_id, texto):
         ultima_interacao=CURRENT_TIMESTAMP,lembrete_enviado=0 WHERE id=?""", (resposta, checkin_id))
     # Atualização e recálculo pertencem à mesma transação.
     database.recalcular_avaliacao_por_checkin(checkin_id, conn)
+    if resposta in ('1', '2'):
+        canal = os.environ.get('RADACHE_CANAL_NAE', '').strip()
+        mensagem = ('Obrigado por compartilhar como você está. Você pode procurar acolhimento no NAE da UNEMAT. '
+                    'O CVV oferece apoio emocional gratuito pelo telefone 188. '
+                    'Seu check-in foi registrado para acompanhamento pela equipe autorizada.')
+        if canal:
+            mensagem += ' Canal institucional de atendimento: ' + canal
+        return mensagem
     return "Obrigado por responder. Seu check-in foi registrado."
 
 
@@ -288,8 +290,10 @@ def processar_mensagem(origem, texto, mensagem_id=None):
     """Reentregas repetem apenas a entrega pendente, nunca a transição da pesquisa."""
     with _fluxo_lock:
         with closing(database.get_connection()) as conn, conn:
-            evento = conn.execute("SELECT resposta,enviado FROM whatsapp_eventos WHERE mensagem_id=?", (mensagem_id,)).fetchone() if mensagem_id else None
+            evento = conn.execute("SELECT resposta,enviado,origem FROM whatsapp_eventos WHERE mensagem_id=?", (mensagem_id,)).fetchone() if mensagem_id else None
             if evento:
+                if not hmac.compare_digest(evento['origem'], privacy.phone_hash(origem)):
+                    return False
                 if evento["enviado"]:
                     return False
                 mensagem = evento["resposta"]
@@ -297,10 +301,11 @@ def processar_mensagem(origem, texto, mensagem_id=None):
                 aluno_id = _encontrar_aluno_por_telefone(origem)
                 if aluno_id is None:
                     return False
+                checkin = conn.execute('SELECT id FROM checkins WHERE aluno_id=? ORDER BY id DESC LIMIT 1', (aluno_id,)).fetchone()
                 mensagem = _preparar_resposta(conn, aluno_id, texto)
                 if mensagem_id:
-                    conn.execute("INSERT INTO whatsapp_eventos (mensagem_id,origem,resposta,enviado) VALUES (?,?,?,?)",
-                                 (mensagem_id, _digitos(origem), mensagem, int(mensagem is None)))
+                    conn.execute("INSERT INTO whatsapp_eventos (mensagem_id,origem,resposta,enviado,aluno_id,checkin_id) VALUES (?,?,?,?,?,?)",
+                                 (mensagem_id, privacy.phone_hash(origem), mensagem, int(mensagem is None), aluno_id, checkin["id"] if checkin else None))
         if mensagem is None:
             return False
         enviar_texto(_digitos(origem), mensagem)

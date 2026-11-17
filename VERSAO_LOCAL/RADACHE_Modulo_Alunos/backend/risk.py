@@ -37,14 +37,18 @@ FÓRMULA GERAL:
    RE = (Risco_Notas * W_notas) + (Risco_Freq * W_freq) + (Risco_Fin * W_fin) + (Risco_Psico * W_psico)
    Onde os pesos padrão são 25% (0.25) para cada pilar, customizáveis via RADACHE_RISK_WEIGHTS.
 
-FAIXAS DE CLASSIFICAÇÃO INSTITUCIONAL:
-   - [0%  a 33%]: ESTÁVEL   (Verde)   -> Aluno integrado, sem alertas imediatos.
-   - [34% a 66%]: MODERADO  (Amarelo) -> Alerta preventivo, acionamento NAE/CAEst.
-   - [67% a 100%]: CRÍTICO  (Vermelho)-> Risco iminente de abandono/trancamento.
+FAIXAS DO INDICADOR HEURÍSTICO (não calibrado estatisticamente):
+   - [0, 33]: ESTÁVEL (Verde).
+   - (33, 67): MODERADO (Amarelo), incluindo valores como 33.01 e 66.99.
+   - [67, 100]: CRÍTICO (Vermelho).
+   O índice não é diagnóstico nem probabilidade validada de evasão.
 """  
 
 import json
 import os
+
+LIMITE_ESTAVEL = 33
+LIMITE_CRITICO = 67
 
 FATORES = ("notas", "frequencia", "financeiro", "psicologico")
 
@@ -155,13 +159,13 @@ def classificar_risco(indice):
     """
     Categoriza o índice numérico nas 3 faixas institucionais de triagem:
     - 'estavel': RE <= 33% (Verde)
-    - 'moderado': 34% <= RE < 67% (Amarelo)
+    - 'moderado': 33% < RE < 67% (Amarelo)
     - 'critico': RE >= 67% (Vermelho)
     """
     indice = _numero_entre(indice, 0, 100, "O índice de risco")
-    if indice <= 33:
+    if indice <= LIMITE_ESTAVEL:
         return "estavel"
-    if indice < 67:
+    if indice < LIMITE_CRITICO:
         return "moderado"
     return "critico"
 
